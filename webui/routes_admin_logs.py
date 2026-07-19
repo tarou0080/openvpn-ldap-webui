@@ -256,7 +256,18 @@ def vpn_connections():
             converted_row.append(row[6] is None)
             connections.append(tuple(converted_row))
 
-        # ... (fetch available_users, available_certs, statistics) ...
+        cursor.execute(
+            "SELECT COUNT(*), "
+            "SUM(CASE WHEN disconnected_at IS NULL THEN 1 ELSE 0 END), "
+            "COUNT(DISTINCT username) "
+            "FROM vpn_connections"
+        )
+        stat_row = cursor.fetchone()
+        statistics = {
+            'total_connections': stat_row[0],
+            'currently_connected': stat_row[1] or 0,
+            'unique_users': stat_row[2],
+        }
         conn.close()
 
         pagination = {
@@ -277,7 +288,6 @@ def vpn_connections():
             'date_to': '',
             'status': '',
         }
-        statistics = {}
         available_users = []
         available_certs = []
         scheduler_status = get_scheduler_status()

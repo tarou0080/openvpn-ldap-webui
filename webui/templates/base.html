@@ -497,14 +497,9 @@
             .language-selector {
                 margin-left: 10px;
             }
-            .col-3 {
+            .col-2, .col-3, .col-4 {
                 flex: 0 0 100%;
                 max-width: 100%;
-                margin-bottom: 0.75rem;
-            }
-            .col-2, .col-4 {
-                flex: 0 0 50%;
-                max-width: 50%;
                 margin-bottom: 0.75rem;
             }
             th, td {
@@ -512,6 +507,21 @@
                 font-size: 0.85rem;
             }
             .table-responsive th, .table-responsive td {
+                white-space: nowrap;
+            }
+            .pagination {
+                flex-wrap: wrap;
+            }
+            .page-item {
+                margin-bottom: 4px;
+            }
+            .page-link {
+                padding: 0.4rem 0.6rem;
+            }
+            .d-flex.gap-2 {
+                flex-wrap: wrap;
+            }
+            .d-flex .btn {
                 white-space: nowrap;
             }
         }

@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2026-07-20
+
+### Fixed
+
+- **Connection history summary cards were blank**: the connection-history view passed an empty statistics context, so the "total connections", "currently connected" and "unique users" cards showed no values. The view now computes these aggregates and the cards display real numbers.
+- **Mobile layout of the connection history page**: summary cards and the filter fields now stack in a single column on small screens instead of being squeezed into narrow half-width columns; the pagination bar wraps onto multiple rows so the previous/next controls are no longer clipped off-screen; and filter/export buttons wrap instead of breaking their labels across lines.
+
 ## [1.1.1] - 2026-07-19
 
 ### Fixed

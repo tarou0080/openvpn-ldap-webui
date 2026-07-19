@@ -259,8 +259,24 @@ def vpn_connections():
         # ... (fetch available_users, available_certs, statistics) ...
         conn.close()
 
-        pagination = {'page': page, 'total_pages': total_pages, 'total_count': total_count}
-        filters = {}
+        pagination = {
+            'page': page,
+            'per_page': per_page,
+            'total_pages': total_pages,
+            'total_count': total_count,
+            'has_prev': page > 1,
+            'prev_page': page - 1,
+            'has_next': page < total_pages,
+            'next_page': page + 1,
+        }
+        filters = {
+            'period': '',
+            'username': '',
+            'cert': '',
+            'date_from': '',
+            'date_to': '',
+            'status': '',
+        }
         statistics = {}
         available_users = []
         available_certs = []

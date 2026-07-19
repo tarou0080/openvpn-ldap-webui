@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-07-19
+
+### Fixed
+
+- **VPN connection history page no longer redirects away**: the admin connection-history view raised a template error and bounced back to the home page because its pagination context was incomplete (missing `per_page`/`has_prev`/`has_next`/`prev_page`/`next_page`) and the filter context was empty. The page now renders the history table with working pagination.
+- **Mobile table readability**: table cells in scrollable tables no longer wrap onto multiple lines on small screens; each row stays on one line and the table scrolls horizontally.
+
+### Changed
+
+- Removed the redundant "Admin Home" / "Back to admin" buttons from admin content pages (certificate list, revoked list, audit logs, system status, connection history); navigation is consolidated into the header, which already provides this link. Contextual links (e.g. "Revoked List") are kept.
+
 ## [1.1.0] - 2026-07-19
 
 ### Added

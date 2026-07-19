@@ -13,7 +13,6 @@
         <h2>{{ _('Approved Certificates') }} ({{ _('certificates count', count=certificates|length) }})</h2>
         <div>
             <a href="{{ url_for('admin_logs.revoked_certificates') }}" class="btn">{{ _('Revoked List') }}</a>
-            <a href="{{ url_for('user.index') }}" class="btn btn-warning">{{ _('Admin Home') }}</a>
         </div>
     </div>
     

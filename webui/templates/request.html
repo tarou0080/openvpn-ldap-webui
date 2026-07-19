@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}証明書要求 - VPN Certificate Manager{% endblock %}
+
+{% block content %}
+<h1>新しい証明書を要求</h1>
+
+<form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-group">
+        <label for="device_name">デバイス名 *</label>
+        <input type="text" id="device_name" name="device_name" required 
+               placeholder="例: laptop-work, iphone-personal" 
+               pattern="[a-zA-Z0-9\-_]+" 
+               title="英数字、ハイフン、アンダースコアのみ使用可能">
+        <small style="color: #6c757d;">英数字、ハイフン、アンダースコアのみ使用可能</small>
+    </div>
+
+    <div class="form-group">
+        <label for="reason">要求理由</label>
+        <textarea id="reason" name="reason" 
+                  placeholder="証明書が必要な理由を入力してください（任意）"></textarea>
+    </div>
+
+    <div style="margin-top: 2rem;">
+        <button type="submit" class="btn">証明書を要求</button>
+        <a href="{{ url_for('user.index') }}" class="btn" style="background-color: #6c757d; margin-left: 10px;">キャンセル</a>
+    </div>
+</form>
+
+<div style="margin-top: 3rem; padding: 1rem; background-color: #e9ecef; border-radius: 4px;">
+    <h3>証明書要求について</h3>
+    <ul>
+        <li><strong>デバイス名:</strong> 使用するデバイスを識別するための名前です</li>
+        <li><strong>一意性:</strong> 同じデバイス名での重複要求はできません</li>
+        <li><strong>承認:</strong> 管理者による承認が必要です</li>
+        <li><strong>証明書の有効期間:</strong> {{ cert_expire_days }}日間</li>
+    </ul>
+    
+    <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">ダウンロード期限</h4>
+    <div style="padding: 0.75rem; background-color: #fff3cd; border-left: 3px solid #ffc107;">
+        <p style="margin: 0 0 0.5rem 0;"><strong>承認後、以下の期限内にダウンロードしてください：</strong></p>
+        <ul style="margin: 0;">
+            {% if download_expire_from_approval_hours == 0 %}
+            <li>承認からの期限：無制限</li>
+            {% else %}
+            <li>承認から<strong>{{ download_expire_from_approval_hours }}時間以内</strong>にダウンロード</li>
+            {% endif %}
+            
+            {% if download_expire_from_first_download_hours == 0 %}
+            <li>ダウンロード回数：<strong>1回のみ</strong>（初回ダウンロード後は即時無効化）</li>
+            {% else %}
+            <li>初回ダウンロード後：<strong>{{ download_expire_from_first_download_hours }}時間以内</strong>に再ダウンロード可能</li>
+            {% endif %}
+        </ul>
+        <p style="margin: 0.5rem 0 0 0; font-size: 0.9em; color: #856404;">
+            ※ダウンロード期限が切れた場合は管理者に再承認を依頼してください
+        </p>
+    </div>
+</div>
+{% endblock %}

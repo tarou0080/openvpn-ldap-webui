@@ -1,0 +1,29 @@
+# 変更履歴
+
+このプロジェクトの重要な変更はすべてこのファイルに記録されます。
+
+フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づき、
+バージョン管理は [Semantic Versioning](https://semver.org/spec/v2.0.0.html) に準拠します。
+
+## [1.0.0] - 2026-07-19
+
+### 追加
+
+- **LDAP連携OpenVPN証明書管理システム** — 初回公開リリース
+- **ユーザーセルフサービスポータル**: 証明書申請・ダウンロード・再申請ワークフロー
+- **管理ポータル**: 証明書承認/拒否・失効・VPN接続履歴・監査ログ・システム状態監視
+- **VPN接続時のLDAP/Active Directory認証**（証明書＋ユーザー名/パスワードの二重認証）
+- **OpenVPNログ自動解析**: 接続/切断イベントを15分ごとにSQLiteへ記録
+- **EasyRSA 3.x による証明書ライフサイクル管理**: CA生成・クライアント証明書発行・失効・CRL管理
+- **WebUIとOpenVPNサーバーコンテナ間の内部Certificate API**による安全な証明書操作
+- **リバースプロキシ連携**: `Remote-User` / `Remote-Groups` ヘッダーによる認証（Authelia対応）
+- **多言語対応**（英語/日本語）: WebUIおよびドキュメント
+- `ADMIN_GROUP` 環境変数による管理者グループの設定
+- 英日両言語ドキュメント: SETUP・CONFIGURATION・LDAP_SETUP・TESTINGガイド
+- 注釈付き設定テンプレート `.env.example` / `.env.example.ja`
+
+### セキュリティ
+
+- CRL有効期限をデフォルト3650日に設定し、期限切れによる全クライアント接続不能を防止
+- LDAPバインド資格情報をサービス単位で分離（専用バインドアカウント）
+- LDAPの設定を起動時に `setenv` でOpenVPNサーバー設定ファイルへ注入し、環境変数の漏洩を防止

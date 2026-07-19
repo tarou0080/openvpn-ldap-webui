@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  openldap-test:
+    image: osixia/openldap:1.5.0
+    container_name: openldap-test
+    environment:
+      - LDAP_ORGANISATION="Test Inc."
+      - LDAP_DOMAIN="test.example.com"
+      - LDAP_ADMIN_PASSWORD=admin
+    volumes:
+      - ./tests/config/openldap/data:/var/lib/ldap
+      - ./tests/config/openldap/slapd.d:/etc/ldap/slapd.d
+      - ./tests/config/openldap/bootstrap:/container/service/slapd/assets/config/bootstrap
+    ports:
+      - "389:389"
+      - "636:636"
+
+  nginx-test:
+    image: nginx:1.25-alpine
+    container_name: nginx-test
+    ports:
+      - "8080:80"
+    volumes:
+      - ./tests/config/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./tests/config/nginx/conf.d/default.conf.template:/etc/nginx/templates/default.conf.template:ro
+    environment:
+      - WEBUI_INTERNAL_PORT=${WEBUI_INTERNAL_PORT:-5000}
+    depends_on:
+      - vpn-webui
+    command: >
+      /bin/sh -c "envsubst '\$WEBUI_INTERNAL_PORT' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"

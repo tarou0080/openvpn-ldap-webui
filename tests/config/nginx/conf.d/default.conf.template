@@ -1,0 +1,35 @@
+server {
+    listen 80;
+    server_name localhost;
+
+    # Hide Nginx version
+    server_tokens off;
+
+    location /admin/ {
+        proxy_pass http://vpn-webui:${WEBUI_INTERNAL_PORT}/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Admin User Headers
+        proxy_set_header Remote-User "testadmin";
+        proxy_set_header Remote-Groups "VPN-Admins,VPN-Users";
+        proxy_set_header Remote-Name "Test Admin";
+        proxy_set_header Remote-Email "testadmin@test.example.com";
+    }
+
+    location / {
+        proxy_pass http://vpn-webui:${WEBUI_INTERNAL_PORT};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Normal User Headers
+        proxy_set_header Remote-User "testuser";
+        proxy_set_header Remote-Groups "VPN-Users";
+        proxy_set_header Remote-Name "Test User";
+        proxy_set_header Remote-Email "testuser@test.example.com";
+    }
+}

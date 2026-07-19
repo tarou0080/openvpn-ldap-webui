@@ -1,0 +1,13 @@
+dn: ou=groups,dc=test,dc=example,dc=com
+objectClass: organizationalUnit
+ou: groups
+
+dn: cn=VPN-Users,ou=groups,dc=test,dc=example,dc=com
+objectClass: groupOfNames
+cn: VPN-Users
+member: cn=init,dc=test,dc=example,dc=com
+
+dn: cn=VPN-Admins,ou=groups,dc=test,dc=example,dc=com
+objectClass: groupOfNames
+cn: VPN-Admins
+member: cn=init,dc=test,dc=example,dc=com

@@ -1,0 +1,111 @@
+version: '3.8'
+
+services:
+  # WebUI for VPN (certificate management)
+  vpn-webui:
+    build:
+      context: ./webui
+      dockerfile: Dockerfile
+    container_name: vpn-webui
+    ports:
+      - "${BIND_IP}:${WEBUI_PORT}:${WEBUI_INTERNAL_PORT}"
+    volumes:
+      - ./data/db:/app/data/db
+      - ./data/certs:/app/data/certs
+      - ./data/logs:/app/data/logs
+      - ./data/openvpn-logs:/app/data/openvpn-logs:ro
+      - ./scripts:/scripts:ro
+      - ./config/openvpn:/app/openvpn-config:ro
+      - ./webui:/app/src:ro
+      - ./webui/supervisord.conf:/etc/supervisor/conf.d/supervisord.conf:ro
+    environment:
+      - TZ=Asia/Tokyo
+      - FLASK_ENV=${FLASK_ENV:-production}
+      - DATABASE_PATH=/app/data/db/vpn.db
+      - CERT_PATH=/app/data/certs
+      - OPENVPN_CONFIG=/app/openvpn-config
+      - OPENVPN_LOG_PATH=/app/data/openvpn-logs
+      - AUTHELIA_HEADERS=true
+      - CERT_API_SECRET=${CERT_API_SECRET}
+      - CERT_API_ENDPOINT=http://${BIND_IP}:${CERT_API_INTERNAL_PORT}
+      - SECRET_KEY=${SECRET_KEY}
+      - ADMIN_DOMAIN=${ADMIN_DOMAIN}
+      - USER_DOMAIN=${USER_DOMAIN}
+      - CERT_EXPIRE_DAYS=${EASYRSA_CERT_EXPIRE:-825}
+      - LOG_ROTATION_TYPE=${LOG_ROTATION_TYPE:-time}
+      - LOG_MAX_SIZE_MB=${LOG_MAX_SIZE_MB:-10}
+      - LOG_BACKUP_COUNT=${LOG_BACKUP_COUNT:-30}
+      - LOG_ROTATION_WHEN=${LOG_ROTATION_WHEN:-D}
+      - LOG_ROTATION_INTERVAL=${LOG_ROTATION_INTERVAL:-1}
+      - DOWNLOAD_EXPIRE_FROM_APPROVAL_HOURS=${DOWNLOAD_EXPIRE_FROM_APPROVAL_HOURS:-24}
+      - DOWNLOAD_EXPIRE_FROM_FIRST_DOWNLOAD_HOURS=${DOWNLOAD_EXPIRE_FROM_FIRST_DOWNLOAD_HOURS:-0}
+      - VPN_LOG_SCHEDULE_MODE=${VPN_LOG_SCHEDULE_MODE:-FIXED}
+      - VPN_LOG_SCHEDULE_INTERVAL=${VPN_LOG_SCHEDULE_INTERVAL:-15}
+      - VPN_LOG_SCHEDULE_TIMES=${VPN_LOG_SCHEDULE_TIMES:-0,15,30,45}
+      - VPN_LOG_PARSER_TIMEOUT=${VPN_LOG_PARSER_TIMEOUT:-300}
+    depends_on:
+      - openvpn-server
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import requests; requests.get('http://localhost:5000/', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # OpenVPN Community Edition Server
+  openvpn-server:
+    build:
+      context: ./config/openvpn
+      dockerfile: Dockerfile
+    container_name: openvpn-server
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    volumes:
+      - ./data/certs:/etc/openvpn
+      - ./data/openvpn-logs:/var/log/openvpn
+      - ./scripts:/scripts:ro
+      - ./config/openvpn/start-openvpn.sh:/usr/local/bin/start-openvpn.sh:ro
+    environment:
+      - TZ=Asia/Tokyo
+      - OVPN_DATA=/etc/openvpn
+      - CERT_API_SECRET=${CERT_API_SECRET}
+      - FLASK_ENV=${FLASK_ENV:-production}
+      - EASYRSA_REQ_COUNTRY=${EASYRSA_REQ_COUNTRY}
+      - EASYRSA_REQ_PROVINCE=${EASYRSA_REQ_PROVINCE}
+      - EASYRSA_REQ_CITY=${EASYRSA_REQ_CITY}
+      - EASYRSA_REQ_ORG=${EASYRSA_REQ_ORG}
+      - EASYRSA_REQ_EMAIL=${EASYRSA_REQ_EMAIL}
+      - EASYRSA_REQ_OU=${EASYRSA_REQ_OU}
+      - EASYRSA_CA_CN=${EASYRSA_CA_CN}
+      - EASYRSA_CLIENT_OU=${EASYRSA_CLIENT_OU}
+      - EASYRSA_CA_EXPIRE=${EASYRSA_CA_EXPIRE:-3650}
+      - EASYRSA_CERT_EXPIRE=${EASYRSA_CERT_EXPIRE:-825}
+      - EASYRSA_CRL_DAYS=${EASYRSA_CRL_DAYS:-180}
+      - EASYRSA_VERSION=${EASYRSA_VERSION:-3.2.1}
+      - VPN_NETWORK=${VPN_NETWORK}
+      - VPN_NETMASK=${VPN_NETMASK}
+      - OPENVPN_REMOTE_HOST=${OPENVPN_REMOTE_HOST}
+      - OPENVPN_PORT=${OPENVPN_PORT}
+      - HOME_NETWORK=${HOME_NETWORK}
+      - HOME_NETMASK=${HOME_NETMASK}
+      - HOME_DNS_SERVER=${HOME_DNS_SERVER}
+      - ENABLE_NETBIOS=${ENABLE_NETBIOS:-true}
+      - CERT_API_BIND_IP=${CERT_API_BIND_IP}
+      - BIND_IP=${BIND_IP}
+      - HOME_DOMAIN=${HOME_DOMAIN:-}
+      - LDAP_SERVER=${LDAP_SERVER}
+      - LDAP_PORT=${LDAP_PORT:-389}
+      - LDAP_BASE_DN=${LDAP_BASE_DN}
+      - LDAP_BIND_USER=${LDAP_BIND_USER}
+      - LDAP_BIND_PASSWORD=${LDAP_BIND_PASSWORD}
+      - LDAP_USER_FILTER=${LDAP_USER_FILTER}
+      - LDAP_VPN_GROUP=${LDAP_VPN_GROUP}
+    healthcheck:
+      test: ["CMD", "sh", "-c", "python3 -c \"import requests; requests.get('http://${CERT_API_BIND_IP}:${CERT_API_INTERNAL_PORT}/health', timeout=5)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

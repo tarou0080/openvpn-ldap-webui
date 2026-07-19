@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Certificate List - VPN Certificate Manager') }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1rem;">
+    <h1>{{ _('Certificate List') }}</h1>
+    <p style="color: #6c757d; margin: 0;">{{ _('List, revoke, and reapprove issued certificates') }}</p>
+</div>
+
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2>{{ _('Approved Certificates') }} ({{ certificates|length }} {{ _('certificates count') }})</h2>
+        <div>
+            <a href="{{ url_for('admin_logs.revoked_certificates') }}" class="btn">{{ _('Revoked List') }}</a>
+            <a href="{{ url_for('user.index') }}" class="btn btn-warning">{{ _('Admin Home') }}</a>
+        </div>
+    </div>
+    
+    {% if certificates %}
+    <table>
+        <thead>
+            <tr>
+                <th>{{ _('ID') }}</th>
+                <th>{{ _('Username') }}</th>
+                <th>{{ _('Device Name') }}</th>
+                <th>{{ _('Certificate Serial') }}</th>
+                <th>{{ _('Approved By') }}</th>
+                <th>{{ _('Approved At') }}</th>
+                <th>{{ _('Certificate Expiry') }}</th>
+                <th>{{ _('First Download') }}</th>
+                <th>{{ _('Download Expiry') }}</th>
+                <th>{{ _('Actions') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cert in certificates %}
+            <tr>
+                <td>{{ cert[0] }}</td>
+                <td><strong>{{ cert[1] }}</strong></td>
+                <td>{{ cert[2] }}</td>
+                <td><code style="background-color: #f8f9fa; padding: 2px 4px; border-radius: 3px; font-size: 12px;">{{ cert[3] }}</code></td>
+                <td>{{ cert[4] }}</td>
+                <td>{{ cert[5] }}</td>
+                <td>
+                    {% if cert[6] %}
+                        <span style="color: #17a2b8; font-weight: 500;">{{ cert[6] }}</span>
+                    {% else %}
+                        <span style="color: #6c757d;">-</span>
+                    {% endif %}
+                </td>
+                <td>{{ cert[7] or '-' }}</td>
+                <td>
+                    {% if cert[8] %}
+                        {% if cert[9] %}
+                            <span style="color: #dc3545; font-weight: bold;">{{ _('Expired') }}</span>
+                        {% else %}
+                            <span style="color: #28a745;">{{ cert[8] }}</span>
+                        {% endif %}
+                    {% else %}
+                        <span style="color: #6c757d;">{{ _('Unlimited') }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                        {% if cert[9] %}
+                        <button type="button" 
+                                class="btn btn-success" 
+                                style="font-size: 12px; padding: 4px 8px;"
+                                onclick="confirmReapprove('{{ cert[0] }}', '{{ cert[1] }}', '{{ cert[2] }}', '{{ cert[3] }}')">
+                            {{ _('Reapprove') }}
+                        </button>
+                        {% endif %}
+                        <button type="button" 
+                                class="btn btn-danger" 
+                                style="font-size: 12px; padding: 4px 8px;"
+                                onclick="confirmRevoke('{{ cert[0] }}', '{{ cert[1] }}', '{{ cert[2] }}', '{{ cert[3] }}')">
+                            {{ _('Revoke') }}
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    {% else %}
+    <div style="padding: 2rem; background-color: #f8f9fa; border-radius: 4px; color: #6c757d; text-align: center;">
+        <p style="margin: 0; font-size: 18px;">{{ _('No approved certificates.') }}</p>
+        <p style="margin: 10px 0 0 0;">{{ _('Will appear here after certificate request approval.') }}</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Reference Information -->
+<div style="margin-top: 3rem; padding: 1rem; background-color: #e7f3ff; border-left: 4px solid #17a2b8; border-radius: 4px;">
+    <h4 style="margin-top: 0; color: #0c5460;">{{ _('About Certificate Management') }}</h4>
+    <ul style="margin: 0; color: #0c5460;">
+        <li>{{ _('Approved certificates are valid and can be used for VPN connection') }}</li>
+        <li>{{ _('Certificate expiry is the validity period of the certificate itself (Current setting: {days} days)', days=cert_expire_days) }}</li>
+        <li>{{ _('Expired certificates can be made downloadable by "Reapprove"') }}</li>
+        <li>{{ _('Reapproval resets the first download record and makes it downloadable again') }}</li>
+        <li>{{ _('Revocation immediately stops VPN connection') }}</li>
+        <li>{{ _('Revocation cannot be undone') }}</li>
+        <li>{{ _('Revoked certificates can be checked in "Revoked List"') }}</li>
+    </ul>
+</div>
+
+<!-- Certificate Reapprove Confirmation Modal -->
+<div id="reapproveModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+    <div style="background-color: white; margin: 15% auto; padding: 20px; border-radius: 8px; width: 500px; max-width: 90%;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #dee2e6; padding-bottom: 10px;">
+            <h3 style="margin: 0;">{{ _('Reapprove Confirmation') }}</h3>
+            <button onclick="closeReapproveModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #6c757d;">&times;</button>
+        </div>
+        
+        <div style="padding: 15px; background-color: #d1ecf1; border-left: 4px solid #17a2b8; margin-bottom: 15px; border-radius: 4px;">
+            <strong style="color: #0c5460;">{{ _('Info') }}:</strong> <span style="color: #0c5460;">{{ _('Download expiry will be extended and the certificate will be downloadable again.') }}</span>
+        </div>
+        
+        <p>{{ _('Reapprove the following certificate?') }}</p>
+        
+        <table style="width: 100%; margin-bottom: 15px;">
+            <tr>
+                <th style="width: 80px; text-align: left; padding: 5px;">{{ _('User') }}:</th>
+                <td style="padding: 5px;"><strong id="reapprove-modal-username"></strong></td>
+            </tr>
+            <tr>
+                <th style="text-align: left; padding: 5px;">{{ _('Device') }}:</th>
+                <td style="padding: 5px;" id="reapprove-modal-device"></td>
+            </tr>
+            <tr>
+                <th style="text-align: left; padding: 5px;">{{ _('Serial') }}:</th>
+                <td style="padding: 5px;"><code id="reapprove-modal-serial" style="background-color: #f8f9fa; padding: 2px 4px; border-radius: 3px;"></code></td>
+            </tr>
+        </table>
+        
+        <p style="color: #6c757d; font-size: 14px;">
+            {{ _('After reapproval, the first download record will be reset and the certificate will be downloadable again within the configured download expiry period.') }}
+        </p>
+        
+        <form id="reapprove-form" method="POST" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="button" onclick="closeReapproveModal()" class="btn" style="background-color: #6c757d;">{{ _('Cancel') }}</button>
+            <button type="submit" class="btn btn-success">{{ _('Confirm Reapprove') }}</button>
+        </form>
+    </div>
+</div>
+
+<!-- Certificate Revoke Confirmation Modal -->
+<div id="revokeModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+    <div style="background-color: white; margin: 15% auto; padding: 20px; border-radius: 8px; width: 500px; max-width: 90%;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #dee2e6; padding-bottom: 10px;">
+            <h3 style="margin: 0;">{{ _('Revoke Confirmation') }}</h3>
+            <button onclick="closeRevokeModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #6c757d;">&times;</button>
+        </div>
+        
+        <div style="padding: 15px; background-color: #fff3cd; border-left: 4px solid #ffc107; margin-bottom: 15px; border-radius: 4px;">
+            <strong style="color: #856404;">{{ _('Warning') }}:</strong> <span style="color: #856404;">{{ _('This operation cannot be undone.') }}</span>
+        </div>
+        
+        <p>{{ _('Revoke the following certificate?') }}</p>
+        
+        <table style="width: 100%; margin-bottom: 15px;">
+            <tr>
+                <th style="width: 80px; text-align: left; padding: 5px;">{{ _('User') }}:</th>
+                <td style="padding: 5px;"><strong id="revoke-modal-username"></strong></td>
+            </tr>
+            <tr>
+                <th style="text-align: left; padding: 5px;">{{ _('Device') }}:</th>
+                <td style="padding: 5px;" id="revoke-modal-device"></td>
+            </tr>
+            <tr>
+                <th style="text-align: left; padding: 5px;">{{ _('Serial') }}:</th>
+                <td style="padding: 5px;"><code id="revoke-modal-serial" style="background-color: #f8f9fa; padding: 2px 4px; border-radius: 3px;"></code></td>
+            </tr>
+        </table>
+        
+        <p style="color: #6c757d; font-size: 14px;">
+            {{ _('After revocation, VPN connection with this client certificate will not be possible.') }}
+        </p>
+        
+        <form id="revoke-form" method="POST" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="button" onclick="closeRevokeModal()" class="btn" style="background-color: #6c757d;">{{ _('Cancel') }}</button>
+            <button type="submit" class="btn btn-danger">{{ _('Confirm Revoke') }}</button>
+        </form>
+    </div>
+</div>
+
+<script>
+function confirmReapprove(certId, username, deviceName, serial) {
+    // Update modal content
+    document.getElementById('reapprove-modal-username').textContent = username;
+    document.getElementById('reapprove-modal-device').textContent = deviceName;
+    document.getElementById('reapprove-modal-serial').textContent = serial;
+    
+    // Set form action
+    const reapproveForm = document.getElementById('reapprove-form');
+    reapproveForm.action = '/admin/reapprove/' + certId;
+    
+    // Show modal
+    document.getElementById('reapproveModal').style.display = 'block';
+}
+
+function closeReapproveModal() {
+    document.getElementById('reapproveModal').style.display = 'none';
+}
+
+function confirmRevoke(certId, username, deviceName, serial) {
+    // Update modal content
+    document.getElementById('revoke-modal-username').textContent = username;
+    document.getElementById('revoke-modal-device').textContent = deviceName;
+    document.getElementById('revoke-modal-serial').textContent = serial;
+    
+    // Set form action
+    const revokeForm = document.getElementById('revoke-form');
+    revokeForm.action = '/admin/revoke/' + certId;
+    
+    // Show modal
+    document.getElementById('revokeModal').style.display = 'block';
+}
+
+function closeRevokeModal() {
+    document.getElementById('revokeModal').style.display = 'none';
+}
+
+// Close modal on outside click
+window.onclick = function(event) {
+    const reapproveModal = document.getElementById('reapproveModal');
+    const revokeModal = document.getElementById('revokeModal');
+    if (event.target == reapproveModal) {
+        closeReapproveModal();
+    }
+    if (event.target == revokeModal) {
+        closeRevokeModal();
+    }
+}
+
+// Close modal on Esc key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeReapproveModal();
+        closeRevokeModal();
+    }
+});
+</script>
+{% endblock %}

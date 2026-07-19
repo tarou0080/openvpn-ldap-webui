@@ -1,0 +1,2 @@
+* * * * * echo "Cron executed at $(date)" >> /app/data/logs/cron_test.log 2>&1
+

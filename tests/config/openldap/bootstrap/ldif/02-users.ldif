@@ -1,0 +1,30 @@
+dn: ou=users,dc=test,dc=example,dc=com
+objectClass: organizationalUnit
+ou: users
+
+dn: uid=testuser,ou=users,dc=test,dc=example,dc=com
+objectClass: inetOrgPerson
+uid: testuser
+cn: Test User
+sn: User
+mail: testuser@test.example.com
+userPassword: password
+
+dn: uid=testadmin,ou=users,dc=test,dc=example,dc=com
+objectClass: inetOrgPerson
+uid: testadmin
+cn: Test Admin
+sn: Admin
+mail: testadmin@test.example.com
+userPassword: password
+
+dn: cn=VPN-Users,ou=groups,dc=test,dc=example,dc=com
+changetype: modify
+add: member
+member: uid=testuser,ou=users,dc=test,dc=example,dc=com
+member: uid=testadmin,ou=users,dc=test,dc=example,dc=com
+
+dn: cn=VPN-Admins,ou=groups,dc=test,dc=example,dc=com
+changetype: modify
+add: member
+member: uid=testadmin,ou=users,dc=test,dc=example,dc=com

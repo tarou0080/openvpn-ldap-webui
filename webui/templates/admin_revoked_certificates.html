@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}削除済み証明書一覧 - VPN Certificate Manager{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1rem;">
+    <h1>削除済み証明書一覧</h1>
+    <p style="color: #6c757d; margin: 0;">無効化・削除された証明書の履歴を表示します</p>
+</div>
+
+<!-- 統計情報 -->
+<div style="margin-bottom: 2rem;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+        <div style="background-color: #f8f9fa; border-left: 4px solid #6c757d; padding: 1rem; border-radius: 4px;">
+            <h4 style="margin: 0; color: #495057;">削除済み</h4>
+            <p style="font-size: 24px; font-weight: bold; margin: 5px 0; color: #dc3545;">{{ statistics.total_revoked }}</p>
+        </div>
+        <div style="background-color: #f8f9fa; border-left: 4px solid #28a745; padding: 1rem; border-radius: 4px;">
+            <h4 style="margin: 0; color: #495057;">有効</h4>
+            <p style="font-size: 24px; font-weight: bold; margin: 5px 0; color: #28a745;">{{ statistics.total_active }}</p>
+        </div>
+        <div style="background-color: #f8f9fa; border-left: 4px solid #ffc107; padding: 1rem; border-radius: 4px;">
+            <h4 style="margin: 0; color: #495057;">承認待ち</h4>
+            <p style="font-size: 24px; font-weight: bold; margin: 5px 0; color: #856404;">{{ statistics.total_pending }}</p>
+        </div>
+        <div style="background-color: #f8f9fa; border-left: 4px solid #17a2b8; padding: 1rem; border-radius: 4px;">
+            <h4 style="margin: 0; color: #495057;">総発行数</h4>
+            <p style="font-size: 24px; font-weight: bold; margin: 5px 0; color: #17a2b8;">{{ statistics.total_certificates }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- フィルタ -->
+<div style="background-color: #f8f9fa; padding: 1rem; border-radius: 4px; margin-bottom: 2rem;">
+    <h3 style="margin-top: 0;">フィルタ</h3>
+    <form method="GET">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end; margin-bottom: 1rem;">
+            <div>
+                <label for="period">期間</label>
+                <select name="period" id="period" style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                    <option value="all" {% if filters.period == 'all' %}selected{% endif %}>すべて</option>
+                    <option value="1day" {% if filters.period == '1day' %}selected{% endif %}>過去24時間</option>
+                    <option value="1week" {% if filters.period == '1week' %}selected{% endif %}>過去7日間</option>
+                    <option value="1month" {% if filters.period == '1month' %}selected{% endif %}>過去30日間</option>
+                    <option value="custom" {% if filters.period == 'custom' %}selected{% endif %}>カスタム期間</option>
+                </select>
+            </div>
+            
+            <div>
+                <label for="date_from">開始日（カスタム期間）</label>
+                <input type="date" name="date_from" id="date_from" value="{{ filters.date_from }}" 
+                       style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+            </div>
+            
+            <div>
+                <label for="date_to">終了日（カスタム期間）</label>
+                <input type="date" name="date_to" id="date_to" value="{{ filters.date_to }}" 
+                       style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+            </div>
+            
+            <div>
+                <label for="username">ユーザー名</label>
+                <input type="text" name="username" id="username" value="{{ filters.username }}" 
+                       placeholder="ユーザー名で検索"
+                       style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+            <button type="submit" class="btn btn-primary">フィルタ適用</button>
+            <a href="{{ url_for('admin_logs.revoked_certificates') }}" class="btn btn-secondary">リセット</a>
+        </div>
+    </form>
+</div>
+
+<!-- 削除済み証明書一覧 -->
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2>削除済み証明書 ({{ pagination.total_count }} 件)</h2>
+        <div>
+            <a href="{{ url_for('admin_certs.certificates') }}" class="btn">有効証明書一覧</a>
+            <a href="{{ url_for('user.index') }}" class="btn btn-warning">管理ホーム</a>
+        </div>
+    </div>
+    
+    {% if revoked_certs %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>ユーザー名</th>
+                <th>デバイス名</th>
+                <th>証明書シリアル</th>
+                <th>削除実行者</th>
+                <th>削除日時</th>
+                <th>元の要求日時</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cert in revoked_certs %}
+            <tr>
+                <td>{{ cert[0] }}</td>
+                <td><strong>{{ cert[1] }}</strong></td>
+                <td>{{ cert[2] }}</td>
+                <td><code style="background-color: #f8f9fa; padding: 2px 4px; border-radius: 3px; font-size: 12px;">{{ cert[3] }}</code></td>
+                <td>{{ cert[4] }}</td>
+                <td><span style="color: #dc3545;">{{ cert[5] }}</span></td>
+                <td style="color: #6c757d;">{{ cert[6] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <!-- ページネーション -->
+    {% if pagination.total_pages > 1 %}
+    <div style="margin-top: 2rem; display: flex; justify-content: center; align-items: center; gap: 10px;">
+        {% if pagination.has_prev %}
+        <a href="{{ url_for('admin_logs.revoked_certificates', page=pagination.prev_page, period=filters.period, username=filters.username, date_from=filters.date_from, date_to=filters.date_to) }}" 
+           class="btn">前のページ</a>
+        {% endif %}
+        
+        <span style="margin: 0 15px;">
+            ページ {{ pagination.page }} / {{ pagination.total_pages }}
+        </span>
+        
+        {% if pagination.has_next %}
+        <a href="{{ url_for('admin_logs.revoked_certificates', page=pagination.next_page, period=filters.period, username=filters.username, date_from=filters.date_from, date_to=filters.date_to) }}" 
+           class="btn">次のページ</a>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <div style="padding: 2rem; background-color: #f8f9fa; border-radius: 4px; color: #6c757d; text-align: center;">
+        <p style="margin: 0; font-size: 18px;">削除済み証明書はありません。</p>
+        {% if filters.username or filters.period != 'all' %}
+        <p style="margin: 10px 0 0 0;">フィルタ条件を変更して再検索してください。</p>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- 参考情報 -->
+<div style="margin-top: 3rem; padding: 1rem; background-color: #e7f3ff; border-left: 4px solid #17a2b8; border-radius: 4px;">
+    <h4 style="margin-top: 0; color: #0c5460;">削除済み証明書について</h4>
+    <ul style="margin: 0; color: #0c5460;">
+        <li>削除済み証明書は無効化されており、VPN接続に使用できません</li>
+        <li>証明書の復活はできません。必要に応じて新しい証明書を発行してください</li>
+        <li>削除履歴は監査目的で保持されます</li>
+        <li>削除操作は監査ログでも確認できます</li>
+    </ul>
+</div>
+
+<script>
+// カスタム期間選択時の動作
+document.getElementById('period').addEventListener('change', function() {
+    const customFields = document.querySelectorAll('#date_from, #date_to');
+    if (this.value === 'custom') {
+        customFields.forEach(field => {
+            field.style.backgroundColor = '#fff3cd';
+            field.focus();
+        });
+    } else {
+        customFields.forEach(field => {
+            field.style.backgroundColor = '';
+        });
+    }
+});
+
+// 初期状態でカスタム期間が選択されている場合
+if (document.getElementById('period').value === 'custom') {
+    document.querySelectorAll('#date_from, #date_to').forEach(field => {
+        field.style.backgroundColor = '#fff3cd';
+    });
+}
+</script>
+{% endblock %}

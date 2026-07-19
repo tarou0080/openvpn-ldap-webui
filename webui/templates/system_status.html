@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}システム状態 - VPN Certificate Manager{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1rem;">
+    <h1>システム状態</h1>
+    <p style="color: #6c757d; margin: 0;">VPNシステムの現在の状態を表示します</p>
+</div>
+
+<!-- システムヘルス・ログ・スケジューラ情報 -->
+<div class="row mb-4 g-3">
+    <!-- システムヘルス -->
+    <div class="col-3">
+        <div class="card {% if system_health.api_status == 'healthy' %}border-success{% elif system_health.api_status == 'degraded' or system_health.api_status == 'timeout' %}border-warning{% else %}border-danger{% endif %}" style="height: auto;">
+            <div class="card-body">
+                <h5 class="card-title">Certificate API</h5>
+                <div style="margin-top: 1rem;">
+                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                        <span style="margin-right: 10px; font-size: 14px;">状態:</span>
+                        {% if system_health.api_status == 'healthy' %}
+                            <span style="background-color: #d4edda; color: #155724; padding: 2px 8px; border-radius: 4px; font-size: 12px;">正常</span>
+                        {% elif system_health.api_status == 'degraded' %}
+                            <span style="background-color: #fff3cd; color: #856404; padding: 2px 8px; border-radius: 4px; font-size: 12px;">注意</span>
+                        {% elif system_health.api_status == 'timeout' %}
+                            <span style="background-color: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 4px; font-size: 12px;">タイムアウト</span>
+                        {% elif system_health.api_status == 'unreachable' %}
+                            <span style="background-color: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 4px; font-size: 12px;">接続不可</span>
+                        {% else %}
+                            <span style="background-color: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 4px; font-size: 12px;">エラー</span>
+                        {% endif %}
+                    </div>
+                    {% if system_health.api_response_time %}
+                    <p style="margin: 5px 0; font-size: 14px;">応答時間: <strong>{{ system_health.api_response_time }}ms</strong></p>
+                    {% endif %}
+                    {% if system_health.api_error %}
+                    <p style="margin: 5px 0; font-size: 14px; color: #dc3545;">エラー: {{ system_health.api_error }}</p>
+                    {% endif %}
+                    <p style="margin: 5px 0; font-size: 14px; color: #6c757d;">最終確認: {{ system_health.api_last_check }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ログファイル情報 -->
+    <div class="col-3">
+        <div class="card {% if log_info.app_log_size_mb > 50 %}border-danger{% elif log_info.app_log_size_mb > 10 %}border-warning{% else %}border-info{% endif %}" style="height: auto;">
+            <div class="card-body">
+                <h5 class="card-title">アプリケーションログ</h5>
+                <div style="margin-top: 1rem;">
+                    {% if log_info.app_log_exists %}
+                        <p style="margin: 5px 0; font-size: 14px;">サイズ: <strong>{{ log_info.app_log_size_mb }} MB</strong></p>
+                        <p style="margin: 5px 0; font-size: 14px; color: #6c757d;">{{ "{:,}".format(log_info.app_log_size) }} bytes</p>
+                        {% if log_info.app_log_size_mb > 50 %}
+                            <p style="margin: 10px 0 5px 0; font-size: 14px; color: #dc3545;">⚠ ログファイルが非常に大きくなっています</p>
+                        {% elif log_info.app_log_size_mb > 10 %}
+                            <p style="margin: 10px 0 5px 0; font-size: 14px; color: #856404;">⚠ ログファイルが大きくなっています</p>
+                        {% else %}
+                            <p style="margin: 10px 0 5px 0; font-size: 14px; color: #28a745;">✓ ログサイズは正常範囲内です</p>
+                        {% endif %}
+                    {% else %}
+                        <p style="margin: 5px 0; font-size: 14px; color: #dc3545;">ログファイルなし</p>
+                    {% endif %}
+                    {% if log_info.app_log_error %}
+                        <p style="margin: 5px 0; font-size: 14px; color: #dc3545;">{{ log_info.app_log_error }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VPNログ解析スケジューラ -->
+    {% if scheduler_status.exists %}
+    <div class="col-3">
+        <div class="card {% if scheduler_status.is_running %}border-primary{% elif scheduler_status.last_run_status == 'success' %}border-success{% elif scheduler_status.last_run_status == 'failed' or scheduler_status.last_run_status == 'error' or scheduler_status.last_run_status == 'timeout' %}border-danger{% elif scheduler_status.last_run_status == 'skipped' %}border-warning{% else %}border-info{% endif %}" style="height: auto;">
+            <div class="card-body">
+                <h5 class="card-title">VPNログ解析スケジューラ</h5>
+                <div style="margin-top: 1rem;">
+                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                        <span style="margin-right: 10px; font-size: 14px;">状態:</span>
+                        {% if scheduler_status.is_running %}
+                            <span style="background-color: #cce5ff; color: #004085; padding: 2px 8px; border-radius: 4px; font-size: 12px;">実行中</span>
+                        {% elif scheduler_status.last_run_status == 'success' %}
+                            <span style="background-color: #d4edda; color: #155724; padding: 2px 8px; border-radius: 4px; font-size: 12px;">正常</span>
+                        {% elif scheduler_status.last_run_status == 'skipped' %}
+                            <span style="background-color: #fff3cd; color: #856404; padding: 2px 8px; border-radius: 4px; font-size: 12px;">スキップ</span>
+                        {% elif scheduler_status.last_run_status == 'failed' or scheduler_status.last_run_status == 'error' %}
+                            <span style="background-color: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 4px; font-size: 12px;">エラー</span>
+                        {% elif scheduler_status.last_run_status == 'timeout' %}
+                            <span style="background-color: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 4px; font-size: 12px;">タイムアウト</span>
+                        {% else %}
+                            <span style="background-color: #e2e3e5; color: #495057; padding: 2px 8px; border-radius: 4px; font-size: 12px;">{{ scheduler_status.last_run_status }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if scheduler_status.last_run_at %}
+                    <p style="margin: 5px 0; font-size: 14px;">最終実行: {{ scheduler_status.last_run_at }}</p>
+                    {% endif %}
+                    
+                    {% if scheduler_status.next_run_at %}
+                    <p style="margin: 5px 0; font-size: 14px;">次回実行: {{ scheduler_status.next_run_at }}</p>
+                    {% endif %}
+                    
+                    {% if scheduler_status.last_error %}
+                    <p style="margin: 10px 0 5px 0; font-size: 14px; color: #dc3545;">エラー: {{ scheduler_status.last_error }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- スケジューラの最近の実行履歴 -->
+{% if scheduler_status.exists and scheduler_status.recent_events %}
+<div style="margin-bottom: 2rem;">
+    <h2>スケジューラ実行履歴</h2>
+    <div style="border: 1px solid #dee2e6; border-radius: 4px; padding: 1rem; background-color: white;">
+        <table style="font-size: 14px;">
+            <thead>
+                <tr>
+                    <th>タイプ</th>
+                    <th>状態</th>
+                    <th>メッセージ</th>
+                    <th>実行時間</th>
+                    <th>日時</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in scheduler_status.recent_events %}
+                <tr>
+                    <td>
+                        {% if event.type == 'run' %}
+                            実行
+                        {% elif event.type == 'skip' %}
+                            スキップ
+                        {% else %}
+                            {{ event.type }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if event.status == 'success' %}
+                            <span style="background-color: #d4edda; color: #155724; padding: 2px 6px; border-radius: 3px; font-size: 12px;">成功</span>
+                        {% elif event.status == 'skipped' %}
+                            <span style="background-color: #fff3cd; color: #856404; padding: 2px 6px; border-radius: 3px; font-size: 12px;">スキップ</span>
+                        {% elif event.status == 'failed' or event.status == 'error' %}
+                            <span style="background-color: #f8d7da; color: #721c24; padding: 2px 6px; border-radius: 3px; font-size: 12px;">エラー</span>
+                        {% elif event.status == 'timeout' %}
+                            <span style="background-color: #f8d7da; color: #721c24; padding: 2px 6px; border-radius: 3px; font-size: 12px;">タイムアウト</span>
+                        {% else %}
+                            <span style="background-color: #e2e3e5; color: #495057; padding: 2px 6px; border-radius: 3px; font-size: 12px;">{{ event.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ event.message or '-' }}</td>
+                    <td>{{ event.duration or '-' }}</td>
+                    <td>{{ event.created_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- 最近の活動 -->
+<div style="margin-bottom: 2rem;">
+    <h2>最近の活動</h2>
+    {% if recent_activities and not recent_activities[0].get('error') %}
+    <div style="border: 1px solid #dee2e6; border-radius: 4px; overflow: hidden; background-color: white;">
+        <table>
+            <thead>
+                <tr>
+                    <th>ユーザー</th>
+                    <th>アクション</th>
+                    <th>対象ID</th>
+                    <th>日時</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for activity in recent_activities %}
+                <tr>
+                    <td>{{ activity.username }}</td>
+                    <td>
+                        {% if activity.action == '証明書要求' %}
+                            <span style="background-color: #cce5ff; color: #004085; padding: 2px 6px; border-radius: 3px; font-size: 12px;">{{ activity.action }}</span>
+                        {% elif activity.action == '証明書承認' %}
+                            <span style="background-color: #d4edda; color: #155724; padding: 2px 6px; border-radius: 3px; font-size: 12px;">{{ activity.action }}</span>
+                        {% elif activity.action == '証明書拒否' %}
+                            <span style="background-color: #f8d7da; color: #721c24; padding: 2px 6px; border-radius: 3px; font-size: 12px;">{{ activity.action }}</span>
+                        {% elif activity.action == '証明書無効化' %}
+                            <span style="background-color: #fff3cd; color: #856404; padding: 2px 6px; border-radius: 3px; font-size: 12px;">{{ activity.action }}</span>
+                        {% elif activity.action == '証明書ダウンロード' %}
+                            <span style="background-color: #e2e3e5; color: #495057; padding: 2px 6px; border-radius: 3px; font-size: 12px;">{{ activity.action }}</span>
+                        {% else %}
+                            <span style="background-color: #f8f9fa; color: #495057; padding: 2px 6px; border-radius: 3px; font-size: 12px;">{{ activity.action }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ activity.target_cert_id or '-' }}</td>
+                    <td>{{ activity.timestamp }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% elif recent_activities and recent_activities[0].get('error') %}
+    <div style="padding: 1rem; background-color: #f8d7da; color: #721c24; border-radius: 4px;">
+        {{ recent_activities[0].error }}
+    </div>
+    {% else %}
+    <div style="padding: 1rem; background-color: #f8f9fa; border-radius: 4px; color: #6c757d;">
+        <p style="margin: 0;">最近の活動はありません。</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- アクション -->
+<div style="margin-bottom: 2rem;">
+    <h2>アクション</h2>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="{{ url_for('user.index') }}" class="btn">管理画面に戻る</a>
+        <a href="#" class="btn" onclick="location.reload(); return false;">更新</a>
+    </div>
+</div>
+
+<div style="margin-top: 2rem; padding: 1rem; background-color: #e7f3ff; border-left: 4px solid #0066cc; border-radius: 4px;">
+    <h4 style="margin-top: 0; color: #004085;">システム状態について</h4>
+    <p style="margin: 0; color: #004085; font-size: 14px;">
+        このページでは、VPN証明書管理システムの現在の状態を表示しています。
+        API応答時間が遅い場合やログファイルが大きくなっている場合は、システム管理者に相談してください。
+        VPNログ解析スケジューラがスキップやエラーを繰り返している場合は、システムログを確認してください。
+    </p>
+</div>
+{% endblock %}

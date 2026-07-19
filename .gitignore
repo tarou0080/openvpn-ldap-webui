@@ -1,0 +1,34 @@
+# 環境変数（テンプレート以外）
+.env
+.env.local
+.env.*.local
+
+# 永続化データ
+data/
+
+# ログ
+*.log
+
+# 一時ファイル
+*.tmp
+*.swp
+*~
+
+# バックアップ
+*.bak
+*.backup
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo

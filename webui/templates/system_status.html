@@ -116,6 +116,7 @@
 <div style="margin-bottom: 2rem;">
     <h2>スケジューラ実行履歴</h2>
     <div style="border: 1px solid #dee2e6; border-radius: 4px; padding: 1rem; background-color: white;">
+        <div class="table-responsive">
         <table style="font-size: 14px;">
             <thead>
                 <tr>
@@ -158,6 +159,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 {% endif %}
@@ -167,6 +169,7 @@
     <h2>最近の活動</h2>
     {% if recent_activities and not recent_activities[0].get('error') %}
     <div style="border: 1px solid #dee2e6; border-radius: 4px; overflow: hidden; background-color: white;">
+        <div class="table-responsive">
         <table>
             <thead>
                 <tr>
@@ -201,6 +204,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        </div>
     </div>
     {% elif recent_activities and recent_activities[0].get('error') %}
     <div style="padding: 1rem; background-color: #f8d7da; color: #721c24; border-radius: 4px;">

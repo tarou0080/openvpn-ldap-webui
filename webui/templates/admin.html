@@ -11,6 +11,7 @@
 <div style="margin-bottom: 2rem;">
     <h2>承認待ちの証明書要求</h2>
     {% if pending_requests %}
+    <div class="table-responsive">
     <table>
         <thead>
             <tr>
@@ -33,13 +34,13 @@
                 <td>
                     <form method="POST" action="{{ url_for('admin_certs.approve_cert', req_id=req[0]) }}" style="display: inline-block; margin: 0;">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-success" 
+                        <button type="submit" class="btn btn-success"
                                 style="font-size: 12px; padding: 4px 8px; margin-right: 5px; cursor: pointer;"
                                 onclick="return confirm('この証明書要求を承認しますか？')">承認</button>
                     </form>
                     <form method="POST" action="{{ url_for('admin_certs.reject_cert', req_id=req[0]) }}" style="display: inline-block; margin: 0;">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-danger" 
+                        <button type="submit" class="btn btn-danger"
                                 style="font-size: 12px; padding: 4px 8px; cursor: pointer;"
                                 onclick="return confirm('この証明書要求を拒否しますか？')">拒否</button>
                     </form>
@@ -48,6 +49,7 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
     {% else %}
     <div style="padding: 1rem; background-color: #f8f9fa; border-radius: 4px; color: #6c757d;">
         <p style="margin: 0;">承認待ちの要求はありません。</p>
@@ -58,6 +60,7 @@
 <div style="margin-bottom: 2rem;">
     <h2>再承認申請中の証明書</h2>
     {% if reapproval_requests %}
+    <div class="table-responsive">
     <table>
         <thead>
             <tr>
@@ -82,13 +85,13 @@
                 <td>
                     <form method="POST" action="{{ url_for('admin_certs.approve_reapproval_request', cert_id=req[0]) }}" style="display: inline-block; margin: 0;">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-success" 
+                        <button type="submit" class="btn btn-success"
                                 style="font-size: 12px; padding: 4px 8px; margin-right: 5px; cursor: pointer;"
                                 onclick="return confirm('この再承認申請を承認しますか？')">再承認</button>
                     </form>
                     <form method="POST" action="{{ url_for('admin_certs.reject_reapproval_request', cert_id=req[0]) }}" style="display: inline-block; margin: 0;">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-danger" 
+                        <button type="submit" class="btn btn-danger"
                                 style="font-size: 12px; padding: 4px 8px; cursor: pointer;"
                                 onclick="return confirm('この再承認申請を拒否しますか？')">拒否</button>
                     </form>
@@ -97,6 +100,7 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
     {% else %}
     <div style="padding: 1rem; background-color: #f8f9fa; border-radius: 4px; color: #6c757d;">
         <p style="margin: 0;">再承認申請はありません。</p>

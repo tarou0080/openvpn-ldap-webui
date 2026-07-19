@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-07-19
+
+### Added
+
+- **Responsive WebUI layout for mobile devices**: navigation collapses to a stacked layout, dashboard cards reflow into fewer columns, and wide tables scroll horizontally within their own container instead of overflowing the page. Desktop rendering is unchanged.
+
+### Fixed
+
+- Approved certificates heading rendered a literal `{count}` placeholder (e.g. `(3 {count} certificates)`) because the count-aware translation string was invoked without its `count` argument. It now reads `(3 certificates)` / `(3 件)`.
+
 ## [1.0.0] - 2026-07-19
 
 ### Added

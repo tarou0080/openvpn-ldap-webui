@@ -84,6 +84,7 @@
     </div>
     
     {% if revoked_certs %}
+    <div class="table-responsive">
     <table>
         <thead>
             <tr>
@@ -110,6 +111,7 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
     
     <!-- ページネーション -->
     {% if pagination.total_pages > 1 %}

@@ -459,6 +459,59 @@
             background-color: #2c3e50;
             color: white;
         }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .container, .container-fluid {
+                padding: 10px;
+            }
+            .main-content {
+                padding: 1rem;
+            }
+            .header {
+                margin-bottom: 1rem;
+            }
+            .nav {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+                padding: 0 10px;
+            }
+            .nav > div:first-child {
+                display: flex;
+                flex-wrap: wrap;
+            }
+            .nav a {
+                margin: 2px 8px 2px 0;
+                padding: 8px 10px;
+            }
+            .nav-right {
+                flex-wrap: wrap;
+                justify-content: space-between;
+            }
+            .language-selector {
+                margin-left: 10px;
+            }
+            .col-3 {
+                flex: 0 0 100%;
+                max-width: 100%;
+                margin-bottom: 0.75rem;
+            }
+            .col-2, .col-4 {
+                flex: 0 0 50%;
+                max-width: 50%;
+                margin-bottom: 0.75rem;
+            }
+            th, td {
+                padding: 8px;
+                font-size: 0.85rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -479,7 +532,7 @@
                     {% endif %}
                     {% endif %}
                 </div>
-                <div style="display: flex; align-items: center;">
+                <div class="nav-right">
                     <div class="domain-indicator">
                         {% if domain.is_admin %}
                         {{ _('Admin Panel') }}

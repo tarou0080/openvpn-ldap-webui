@@ -1,198 +1,139 @@
 {% extends "base.html" %}
+{% from "_macros.html" import action_badge, filter_period_js, pagination_simple with context %}
 
-{% block title %}監査ログ - VPN Certificate Manager{% endblock %}
+{% block title %}{{ _('Audit Log') }} - {{ _('VPN Certificate Manager') }}{% endblock %}
 
 {% block content %}
-<div style="margin-bottom: 1rem;">
-    <h1>監査ログ</h1>
-    <p style="color: #6c757d; margin: 0;">システムの全活動履歴を表示・検索できます</p>
+
+<div class="mb-3">
+  <h1>{{ _('Audit Log') }}</h1>
+  <p class="text-muted" style="margin: 0;">{{ _('Display all activity history') }}</p>
 </div>
 
 <!-- フィルタ -->
-<div style="margin-bottom: 2rem;">
-    <h2>フィルタ・検索</h2>
-    <form method="GET" style="border: 1px solid #dee2e6; border-radius: 4px; padding: 1rem; background-color: #f8f9fa;">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
-            <!-- 期間フィルタ -->
-            <div>
-                <label style="display: block; margin-bottom: 5px; font-weight: bold;">期間</label>
-                <select name="period" style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
-                    <option value="all" {% if filters.period == 'all' %}selected{% endif %}>全期間</option>
-                    <option value="1day" {% if filters.period == '1day' %}selected{% endif %}>過去1日</option>
-                    <option value="1week" {% if filters.period == '1week' %}selected{% endif %}>過去1週間</option>
-                    <option value="1month" {% if filters.period == '1month' %}selected{% endif %}>過去1ヶ月</option>
-                    <option value="custom" {% if filters.period == 'custom' %}selected{% endif %}>カスタム期間</option>
-                </select>
-            </div>
-            
-            <!-- アクションフィルタ -->
-            <div>
-                <label style="display: block; margin-bottom: 5px; font-weight: bold;">アクション</label>
-                <select name="action" style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
-                    <option value="all" {% if filters.action == 'all' %}selected{% endif %}>全てのアクション</option>
-                    <option value="request" {% if filters.action == 'request' %}selected{% endif %}>証明書要求</option>
-                    <option value="approve" {% if filters.action == 'approve' %}selected{% endif %}>証明書承認</option>
-                    <option value="reject" {% if filters.action == 'reject' %}selected{% endif %}>証明書拒否</option>
-                    <option value="revoke" {% if filters.action == 'revoke' %}selected{% endif %}>証明書無効化</option>
-                    <option value="download" {% if filters.action == 'download' %}selected{% endif %}>証明書ダウンロード</option>
-                </select>
-            </div>
-            
-            <!-- ユーザーフィルタ -->
-            <div>
-                <label style="display: block; margin-bottom: 5px; font-weight: bold;">ユーザー</label>
-                <input type="text" name="username" value="{{ filters.username }}" placeholder="ユーザー名（部分一致）" style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
-            </div>
+<div class="card mb-4">
+  <div class="card-header"><h2 style="margin: 0; font-size: 1.1rem;">{{ _('Filter & Search') }}</h2></div>
+  <div class="card-body" style="padding: 1rem;">
+    <form method="GET" action="{{ url_for('admin_logs.audit_logs') }}">
+      <div class="row g-2 mb-3">
+        <div class="col-3">
+          <label for="period" class="form-label">{{ _('Period') }}</label>
+          <select name="period" id="period" class="form-select">
+            <option value="all" {% if filters.period == 'all' %}selected{% endif %}>{{ _('All') }}</option>
+            <option value="1day" {% if filters.period == '1day' %}selected{% endif %}>{{ _('Past 24 hours') }}</option>
+            <option value="1week" {% if filters.period == '1week' %}selected{% endif %}>{{ _('Past 7 days') }}</option>
+            <option value="1month" {% if filters.period == '1month' %}selected{% endif %}>{{ _('Past 30 days') }}</option>
+            <option value="custom" {% if filters.period == 'custom' %}selected{% endif %}>{{ _('Custom Period') }}</option>
+          </select>
         </div>
-        
-        <!-- カスタム期間入力 -->
-        <div id="custom-date-range" style="display: {% if filters.period == 'custom' %}grid{% else %}none{% endif %}; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-            <div>
-                <label style="display: block; margin-bottom: 5px; font-weight: bold;">開始日</label>
-                <input type="date" name="date_from" value="{{ filters.date_from }}" style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
-            </div>
-            <div>
-                <label style="display: block; margin-bottom: 5px; font-weight: bold;">終了日</label>
-                <input type="date" name="date_to" value="{{ filters.date_to }}" style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
-            </div>
+        <div class="col-3">
+          <label for="date_from" class="form-label">{{ _('Start Date') }}</label>
+          <input type="date" name="date_from" id="date_from" class="form-control" value="{{ filters.date_from }}">
         </div>
-        
-        <!-- フィルタボタン -->
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <button type="submit" class="btn btn-primary">フィルタ適用</button>
-            <a href="{{ url_for('admin_logs.audit_logs') }}" class="btn">フィルタクリア</a>
-            <a href="{{ url_for('admin_logs.audit_logs_export') }}?{{ request.query_string.decode() }}" class="btn btn-success">CSV出力</a>
+        <div class="col-3">
+          <label for="date_to" class="form-label">{{ _('End Date') }}</label>
+          <input type="date" name="date_to" id="date_to" class="form-control" value="{{ filters.date_to }}">
         </div>
+        <div class="col-3">
+          <label for="action" class="form-label">{{ _('Action') }}</label>
+          <select name="action" id="action" class="form-select">
+            <option value="all" {% if filters.action == 'all' %}selected{% endif %}>{{ _('All Actions') }}</option>
+            <option value="request" {% if filters.action == 'request' %}selected{% endif %}>{{ _('Certificate Request') }}</option>
+            <option value="approve" {% if filters.action == 'approve' %}selected{% endif %}>{{ _('Certificate Approval') }}</option>
+            <option value="reject" {% if filters.action == 'reject' %}selected{% endif %}>{{ _('Certificate Rejection') }}</option>
+            <option value="revoke" {% if filters.action == 'revoke' %}selected{% endif %}>{{ _('Certificate Revocation') }}</option>
+            <option value="download" {% if filters.action == 'download' %}selected{% endif %}>{{ _('Certificate Download') }}</option>
+          </select>
+        </div>
+        <div class="col-3">
+          <label for="username" class="form-label">{{ _('Username') }}</label>
+          <input type="text" name="username" id="username" class="form-control"
+                 value="{{ filters.username }}" placeholder="{{ _('Search by username') }}">
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">{{ _('Apply Filter') }}</button>
+        <a href="{{ url_for('admin_logs.audit_logs') }}" class="btn btn-secondary">{{ _('Clear Filter') }}</a>
+        <a href="{{ url_for('admin_logs.audit_logs_export') }}?{{ request.query_string.decode() }}" class="btn btn-success">{{ _('Export CSV') }}</a>
+      </div>
     </form>
+    {{ filter_period_js() }}
+  </div>
 </div>
 
 <!-- 結果統計 -->
-<div style="margin-bottom: 1rem;">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <div>
-            <span style="color: #6c757d;">総件数: {{ pagination.total_count }}件</span>
-            {% if pagination.total_pages > 1 %}
-                <span style="color: #6c757d; margin-left: 15px;">
-                    {{ pagination.page }} / {{ pagination.total_pages }} ページ
-                </span>
-            {% endif %}
-        </div>
-        <div>
-            <span style="font-size: 12px; color: #6c757d;">
-                {{ ((pagination.page - 1) * pagination.per_page + 1) }} - 
-                {{ ((pagination.page - 1) * pagination.per_page + audit_logs|length) }} 件表示
-            </span>
-        </div>
-    </div>
+<div class="mb-3 d-flex" style="justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+  <span class="text-muted">{{ _('Total count') }}: {{ pagination.total_count }}{{ _('items') }}</span>
+  {% if pagination.total_pages > 1 %}
+  <span class="text-muted" style="font-size: 12px;">
+    {{ ((pagination.page - 1) * pagination.per_page + 1) }} -
+    {{ ((pagination.page - 1) * pagination.per_page + audit_logs|length) }} {{ _('items') }}
+  </span>
+  {% endif %}
 </div>
 
 <!-- 監査ログ一覧 -->
-<div style="margin-bottom: 2rem;">
-    {% if audit_logs %}
-    <div class="table-responsive">
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>日時</th>
-                    <th>ユーザー名</th>
-                    <th>アクション</th>
-                    <th>対象ID</th>
-                    <th>IPアドレス</th>
-                    <th>ユーザーエージェント</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for log in audit_logs %}
-                <tr>
-                    <td>{{ log.id }}</td>
-                    <td style="white-space: nowrap;">{{ log.timestamp }}</td>
-                    <td>{{ log.username }}</td>
-                    <td>
-                        {% if log.action_raw == 'request' %}
-                            <span style="background-color: #cce5ff; color: #004085; padding: 2px 6px; border-radius: 3px; font-size: 12px;">{{ log.action }}</span>
-                        {% elif log.action_raw == 'approve' %}
-                            <span style="background-color: #d4edda; color: #155724; padding: 2px 6px; border-radius: 3px; font-size: 12px;">{{ log.action }}</span>
-                        {% elif log.action_raw == 'reject' %}
-                            <span style="background-color: #f8d7da; color: #721c24; padding: 2px 6px; border-radius: 3px; font-size: 12px;">{{ log.action }}</span>
-                        {% elif log.action_raw == 'revoke' %}
-                            <span style="background-color: #fff3cd; color: #856404; padding: 2px 6px; border-radius: 3px; font-size: 12px;">{{ log.action }}</span>
-                        {% elif log.action_raw == 'download' %}
-                            <span style="background-color: #e2e3e5; color: #495057; padding: 2px 6px; border-radius: 3px; font-size: 12px;">{{ log.action }}</span>
-                        {% else %}
-                            <span style="background-color: #f8f9fa; color: #495057; padding: 2px 6px; border-radius: 3px; font-size: 12px;">{{ log.action }}</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ log.target_cert_id or '-' }}</td>
-                    <td style="font-family: monospace; font-size: 12px;">{{ log.ip_address or '-' }}</td>
-                    <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px;" title="{{ log.user_agent }}">
-                        {{ log.user_agent or '-' }}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-    <div style="padding: 2rem; text-align: center; background-color: #f8f9fa; border-radius: 4px; color: #6c757d;">
-        <p style="margin: 0; font-size: 16px;">該当する監査ログが見つかりませんでした。</p>
-        <p style="margin: 10px 0 0 0; font-size: 14px;">フィルタ条件を変更して再度検索してください。</p>
-    </div>
-    {% endif %}
+<div class="mb-4">
+  {% if audit_logs %}
+  <div class="table-responsive">
+    <table class="table table-striped table-hover">
+      <thead>
+        <tr>
+          <th>{{ _('ID') }}</th>
+          <th>{{ _('Date/Time') }}</th>
+          <th>{{ _('Username') }}</th>
+          <th>{{ _('Action') }}</th>
+          <th>{{ _('Target ID') }}</th>
+          <th>{{ _('IP Address') }}</th>
+          <th>{{ _('User Agent') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in audit_logs %}
+        <tr>
+          <td>{{ log.id }}</td>
+          <td style="white-space: nowrap;">{{ log.timestamp }}</td>
+          <td>{{ log.username }}</td>
+          <td>{{ action_badge(log.action_raw, log.action) }}</td>
+          <td>{{ log.target_cert_id or '-' }}</td>
+          <td style="font-family: monospace; font-size: 12px;">{{ log.ip_address or '-' }}</td>
+          <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px;" title="{{ log.user_agent }}">
+            {{ log.user_agent or '-' }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="padding: 2rem; text-align: center; background-color: #f8f9fa; border-radius: 4px; color: #6c757d;">
+    <p style="margin: 0; font-size: 16px;">{{ _('No matching audit logs') }}</p>
+    <p style="margin: 10px 0 0 0; font-size: 14px;">{{ _('Change filter conditions') }}</p>
+  </div>
+  {% endif %}
 </div>
 
 <!-- ページネーション -->
-{% if pagination.total_pages > 1 %}
-<div style="margin-bottom: 2rem;">
-    <div style="display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap;">
-        {% if pagination.has_prev %}
-            <a href="{{ url_for('admin_logs.audit_logs', page=1, **filters) }}" class="btn" style="font-size: 12px; padding: 4px 8px;">最初</a>
-            <a href="{{ url_for('admin_logs.audit_logs', page=pagination.prev_page, **filters) }}" class="btn" style="font-size: 12px; padding: 4px 8px;">前へ</a>
-        {% endif %}
-        
-        <span style="color: #6c757d; font-size: 14px;">
-            {{ pagination.page }} / {{ pagination.total_pages }}
-        </span>
-        
-        {% if pagination.has_next %}
-            <a href="{{ url_for('admin_logs.audit_logs', page=pagination.next_page, **filters) }}" class="btn" style="font-size: 12px; padding: 4px 8px;">次へ</a>
-            <a href="{{ url_for('admin_logs.audit_logs', page=pagination.total_pages, **filters) }}" class="btn" style="font-size: 12px; padding: 4px 8px;">最後</a>
-        {% endif %}
-    </div>
-</div>
-{% endif %}
+{{ pagination_simple(pagination, filters, 'admin_logs.audit_logs') }}
 
 <!-- アクション -->
-<div style="margin-bottom: 2rem;">
-    <h2>アクション</h2>
-    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <a href="#" class="btn" onclick="location.reload()">更新</a>
-    </div>
+<div class="mb-4">
+  <div class="d-flex gap-2">
+    <a href="#" class="btn btn-secondary" onclick="location.reload(); return false;">{{ _('Refresh') }}</a>
+  </div>
 </div>
 
 <!-- 説明 -->
 <div style="margin-top: 2rem; padding: 1rem; background-color: #e7f3ff; border-left: 4px solid #0066cc; border-radius: 4px;">
-    <h4 style="margin-top: 0; color: #004085;">監査ログについて</h4>
-    <div style="color: #004085; font-size: 14px;">
-        <p style="margin: 0 0 10px 0;">このページでは、VPN証明書管理システムの全ての活動履歴を確認できます。</p>
-        <ul style="margin: 0; padding-left: 20px;">
-            <li>証明書の要求、承認、拒否、無効化、ダウンロードの全履歴</li>
-            <li>実行ユーザー、日時、IPアドレスの記録</li>
-            <li>期間やアクション種類での絞り込み検索</li>
-            <li>CSV形式での出力・保存</li>
-        </ul>
-    </div>
+  <h4 style="margin-top: 0; color: #004085;">{{ _('About Audit Log') }}</h4>
+  <div style="color: #004085; font-size: 14px;">
+    <p style="margin: 0 0 10px 0;">{{ _('View all activity') }}</p>
+    <ul style="margin: 0; padding-left: 20px;">
+      <li>{{ _('All history recorded') }}</li>
+      <li>{{ _('User time IP recorded2') }}</li>
+      <li>{{ _('Filter by period and action') }}</li>
+      <li>{{ _('CSV export and save') }}</li>
+    </ul>
+  </div>
 </div>
-
-<script>
-// カスタム期間の表示/非表示切り替え
-document.querySelector('select[name="period"]').addEventListener('change', function() {
-    const customRange = document.getElementById('custom-date-range');
-    if (this.value === 'custom') {
-        customRange.style.display = 'grid';
-    } else {
-        customRange.style.display = 'none';
-    }
-});
-</script>
 {% endblock %}

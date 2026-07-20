@@ -1,178 +1,128 @@
 {% extends "base.html" %}
+{% from "_macros.html" import stat_card, filter_period_js, pagination_numbered with context %}
 
-{% block title %}削除済み証明書一覧 - VPN Certificate Manager{% endblock %}
+{% block title %}{{ _('Revoked Certificate List') }} - {{ _('VPN Certificate Manager') }}{% endblock %}
 
 {% block content %}
-<div style="margin-bottom: 1rem;">
-    <h1>削除済み証明書一覧</h1>
-    <p style="color: #6c757d; margin: 0;">無効化・削除された証明書の履歴を表示します</p>
+
+<div class="mb-3">
+  <h1>{{ _('Revoked Certificate List') }}</h1>
+  <p class="text-muted" style="margin: 0;">{{ _('Display revoked cert history') }}</p>
 </div>
 
 <!-- 統計情報 -->
-<div style="margin-bottom: 2rem;">
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-        <div style="background-color: #f8f9fa; border-left: 4px solid #6c757d; padding: 1rem; border-radius: 4px;">
-            <h4 style="margin: 0; color: #495057;">削除済み</h4>
-            <p style="font-size: 24px; font-weight: bold; margin: 5px 0; color: #dc3545;">{{ statistics.total_revoked }}</p>
-        </div>
-        <div style="background-color: #f8f9fa; border-left: 4px solid #28a745; padding: 1rem; border-radius: 4px;">
-            <h4 style="margin: 0; color: #495057;">有効</h4>
-            <p style="font-size: 24px; font-weight: bold; margin: 5px 0; color: #28a745;">{{ statistics.total_active }}</p>
-        </div>
-        <div style="background-color: #f8f9fa; border-left: 4px solid #ffc107; padding: 1rem; border-radius: 4px;">
-            <h4 style="margin: 0; color: #495057;">承認待ち</h4>
-            <p style="font-size: 24px; font-weight: bold; margin: 5px 0; color: #856404;">{{ statistics.total_pending }}</p>
-        </div>
-        <div style="background-color: #f8f9fa; border-left: 4px solid #17a2b8; padding: 1rem; border-radius: 4px;">
-            <h4 style="margin: 0; color: #495057;">総発行数</h4>
-            <p style="font-size: 24px; font-weight: bold; margin: 5px 0; color: #17a2b8;">{{ statistics.total_certificates }}</p>
-        </div>
-    </div>
+<div class="row g-3 mb-4">
+  <div class="col-4">
+    {{ stat_card(_('Total Revoked'), statistics.total_revoked, 'border-danger') }}
+  </div>
+  <div class="col-4">
+    {{ stat_card(_('Total Active'), statistics.total_active, 'border-success') }}
+  </div>
+  <div class="col-4">
+    {{ stat_card(_('Total Pending'), statistics.total_pending, 'border-warning') }}
+  </div>
+  <div class="col-4">
+    {{ stat_card(_('Total Issued'), statistics.total_certificates, 'border-info') }}
+  </div>
 </div>
 
 <!-- フィルタ -->
-<div style="background-color: #f8f9fa; padding: 1rem; border-radius: 4px; margin-bottom: 2rem;">
-    <h3 style="margin-top: 0;">フィルタ</h3>
-    <form method="GET">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end; margin-bottom: 1rem;">
-            <div>
-                <label for="period">期間</label>
-                <select name="period" id="period" style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
-                    <option value="all" {% if filters.period == 'all' %}selected{% endif %}>すべて</option>
-                    <option value="1day" {% if filters.period == '1day' %}selected{% endif %}>過去24時間</option>
-                    <option value="1week" {% if filters.period == '1week' %}selected{% endif %}>過去7日間</option>
-                    <option value="1month" {% if filters.period == '1month' %}selected{% endif %}>過去30日間</option>
-                    <option value="custom" {% if filters.period == 'custom' %}selected{% endif %}>カスタム期間</option>
-                </select>
-            </div>
-            
-            <div>
-                <label for="date_from">開始日（カスタム期間）</label>
-                <input type="date" name="date_from" id="date_from" value="{{ filters.date_from }}" 
-                       style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
-            </div>
-            
-            <div>
-                <label for="date_to">終了日（カスタム期間）</label>
-                <input type="date" name="date_to" id="date_to" value="{{ filters.date_to }}" 
-                       style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
-            </div>
-            
-            <div>
-                <label for="username">ユーザー名</label>
-                <input type="text" name="username" id="username" value="{{ filters.username }}" 
-                       placeholder="ユーザー名で検索"
-                       style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
-            </div>
+<div class="card mb-4">
+  <div class="card-header"><h2 style="margin: 0; font-size: 1.1rem;">{{ _('Filter') }}</h2></div>
+  <div class="card-body" style="padding: 1rem;">
+    <form method="GET" action="{{ url_for('admin_logs.revoked_certificates') }}">
+      <div class="row g-2 mb-3">
+        <div class="col-3">
+          <label for="period" class="form-label">{{ _('Period') }}</label>
+          <select name="period" id="period" class="form-select">
+            <option value="all" {% if filters.period == 'all' %}selected{% endif %}>{{ _('All') }}</option>
+            <option value="1day" {% if filters.period == '1day' %}selected{% endif %}>{{ _('Past 24 hours') }}</option>
+            <option value="1week" {% if filters.period == '1week' %}selected{% endif %}>{{ _('Past 7 days') }}</option>
+            <option value="1month" {% if filters.period == '1month' %}selected{% endif %}>{{ _('Past 30 days') }}</option>
+            <option value="custom" {% if filters.period == 'custom' %}selected{% endif %}>{{ _('Custom Period') }}</option>
+          </select>
         </div>
-        
-        <div style="display: flex; gap: 10px;">
-            <button type="submit" class="btn btn-primary">フィルタ適用</button>
-            <a href="{{ url_for('admin_logs.revoked_certificates') }}" class="btn btn-secondary">リセット</a>
+        <div class="col-3">
+          <label for="date_from" class="form-label">{{ _('Start Date (Custom)') }}</label>
+          <input type="date" name="date_from" id="date_from" class="form-control" value="{{ filters.date_from }}">
         </div>
+        <div class="col-3">
+          <label for="date_to" class="form-label">{{ _('End Date (Custom)') }}</label>
+          <input type="date" name="date_to" id="date_to" class="form-control" value="{{ filters.date_to }}">
+        </div>
+        <div class="col-3">
+          <label for="username" class="form-label">{{ _('Username') }}</label>
+          <input type="text" name="username" id="username" class="form-control"
+                 value="{{ filters.username }}" placeholder="{{ _('Partial match') }}">
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">{{ _('Apply Filter') }}</button>
+        <a href="{{ url_for('admin_logs.revoked_certificates') }}" class="btn btn-secondary">{{ _('Reset') }}</a>
+      </div>
     </form>
+    {{ filter_period_js() }}
+  </div>
 </div>
 
 <!-- 削除済み証明書一覧 -->
-<div style="margin-bottom: 2rem;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <h2>削除済み証明書 ({{ pagination.total_count }} 件)</h2>
-        <div>
-            <a href="{{ url_for('admin_certs.certificates') }}" class="btn">有効証明書一覧</a>
-        </div>
-    </div>
-    
-    {% if revoked_certs %}
-    <div class="table-responsive">
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>ユーザー名</th>
-                <th>デバイス名</th>
-                <th>証明書シリアル</th>
-                <th>削除実行者</th>
-                <th>削除日時</th>
-                <th>元の要求日時</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for cert in revoked_certs %}
-            <tr>
-                <td>{{ cert[0] }}</td>
-                <td><strong>{{ cert[1] }}</strong></td>
-                <td>{{ cert[2] }}</td>
-                <td><code style="background-color: #f8f9fa; padding: 2px 4px; border-radius: 3px; font-size: 12px;">{{ cert[3] }}</code></td>
-                <td>{{ cert[4] }}</td>
-                <td><span style="color: #dc3545;">{{ cert[5] }}</span></td>
-                <td style="color: #6c757d;">{{ cert[6] }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
+<div class="mb-4">
+  <div class="d-flex mb-3" style="justify-content: space-between; align-items: center;">
+    <h2>{{ _('Revoked Certificate List') }} ({{ pagination.total_count }} {{ _('items') }})</h2>
+    <a href="{{ url_for('admin_certs.certificates') }}" class="btn btn-secondary">{{ _('Active Certificate List') }}</a>
+  </div>
+
+  {% if revoked_certs %}
+  <div class="table-responsive">
+    <table class="table table-striped table-hover">
+      <thead>
+        <tr>
+          <th>{{ _('ID') }}</th>
+          <th>{{ _('Username') }}</th>
+          <th>{{ _('Device Name') }}</th>
+          <th>{{ _('Certificate Serial') }}</th>
+          <th>{{ _('Revoked By') }}</th>
+          <th>{{ _('Revoked At') }}</th>
+          <th>{{ _('Original Request Date') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cert in revoked_certs %}
+        <tr>
+          <td>{{ cert[0] }}</td>
+          <td><strong>{{ cert[1] }}</strong></td>
+          <td>{{ cert[2] }}</td>
+          <td><code style="background-color: #f8f9fa; padding: 2px 4px; border-radius: 3px; font-size: 12px;">{{ cert[3] }}</code></td>
+          <td>{{ cert[4] }}</td>
+          <td style="color: #dc3545;">{{ cert[5] }}</td>
+          <td class="text-muted">{{ cert[6] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
-    </div>
-    
-    <!-- ページネーション -->
-    {% if pagination.total_pages > 1 %}
-    <div style="margin-top: 2rem; display: flex; justify-content: center; align-items: center; gap: 10px;">
-        {% if pagination.has_prev %}
-        <a href="{{ url_for('admin_logs.revoked_certificates', page=pagination.prev_page, period=filters.period, username=filters.username, date_from=filters.date_from, date_to=filters.date_to) }}" 
-           class="btn">前のページ</a>
-        {% endif %}
-        
-        <span style="margin: 0 15px;">
-            ページ {{ pagination.page }} / {{ pagination.total_pages }}
-        </span>
-        
-        {% if pagination.has_next %}
-        <a href="{{ url_for('admin_logs.revoked_certificates', page=pagination.next_page, period=filters.period, username=filters.username, date_from=filters.date_from, date_to=filters.date_to) }}" 
-           class="btn">次のページ</a>
-        {% endif %}
-    </div>
+  </div>
+
+  <!-- ページネーション -->
+  {{ pagination_numbered(pagination, filters, 'admin_logs.revoked_certificates') }}
+
+  {% else %}
+  <div style="padding: 2rem; background-color: #f8f9fa; border-radius: 4px; color: #6c757d; text-align: center;">
+    <p style="margin: 0; font-size: 18px;">{{ _('No revoked certificates') }}</p>
+    {% if filters.username or filters.period != 'all' %}
+    <p style="margin: 10px 0 0 0;">{{ _('Change filter and search') }}</p>
     {% endif %}
-    
-    {% else %}
-    <div style="padding: 2rem; background-color: #f8f9fa; border-radius: 4px; color: #6c757d; text-align: center;">
-        <p style="margin: 0; font-size: 18px;">削除済み証明書はありません。</p>
-        {% if filters.username or filters.period != 'all' %}
-        <p style="margin: 10px 0 0 0;">フィルタ条件を変更して再検索してください。</p>
-        {% endif %}
-    </div>
-    {% endif %}
+  </div>
+  {% endif %}
 </div>
 
 <!-- 参考情報 -->
 <div style="margin-top: 3rem; padding: 1rem; background-color: #e7f3ff; border-left: 4px solid #17a2b8; border-radius: 4px;">
-    <h4 style="margin-top: 0; color: #0c5460;">削除済み証明書について</h4>
-    <ul style="margin: 0; color: #0c5460;">
-        <li>削除済み証明書は無効化されており、VPN接続に使用できません</li>
-        <li>証明書の復活はできません。必要に応じて新しい証明書を発行してください</li>
-        <li>削除履歴は監査目的で保持されます</li>
-        <li>削除操作は監査ログでも確認できます</li>
-    </ul>
+  <h4 style="margin-top: 0; color: #0c5460;">{{ _('About Revoked Certificates') }}</h4>
+  <ul style="margin: 0; color: #0c5460;">
+    <li>{{ _('Revoked certs cannot be used') }}</li>
+    <li>{{ _('Cannot restore') }}</li>
+    <li>{{ _('History for audit') }}</li>
+    <li>{{ _('Check audit logs too') }}</li>
+  </ul>
 </div>
-
-<script>
-// カスタム期間選択時の動作
-document.getElementById('period').addEventListener('change', function() {
-    const customFields = document.querySelectorAll('#date_from, #date_to');
-    if (this.value === 'custom') {
-        customFields.forEach(field => {
-            field.style.backgroundColor = '#fff3cd';
-            field.focus();
-        });
-    } else {
-        customFields.forEach(field => {
-            field.style.backgroundColor = '';
-        });
-    }
-});
-
-// 初期状態でカスタム期間が選択されている場合
-if (document.getElementById('period').value === 'custom') {
-    document.querySelectorAll('#date_from, #date_to').forEach(field => {
-        field.style.backgroundColor = '#fff3cd';
-    });
-}
-</script>
 {% endblock %}

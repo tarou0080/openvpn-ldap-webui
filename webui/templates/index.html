@@ -1,153 +1,160 @@
 {% extends "base.html" %}
-{% block title %}VPN Certificate Manager - ホーム{% endblock %}
+
+{% block title %}{{ _('VPN Certificate Manager') }} - {{ _('Home') }}{% endblock %}
+
 {% block content %}
-<h1>VPN Certificate Manager</h1>
-<div style="margin-bottom: 2rem;">
-    <h2>ユーザー情報</h2>
-    <p><strong>ユーザー名:</strong> {{ user.username }}</p>
-    <p><strong>表示名:</strong> {{ user.name or 'なし' }}</p>
-    <p><strong>メールアドレス:</strong> {{ user.email or 'なし' }}</p>
+<h1>{{ _('VPN Certificate Manager') }}</h1>
+
+<!-- ユーザー情報 -->
+<div class="mb-4">
+  <h2>{{ _('User Information') }}</h2>
+  <p><strong>{{ _('Username') }}:</strong> {{ user.username }}</p>
+  <p><strong>{{ _('Display Name') }}:</strong> {{ user.name or _('None') }}</p>
+  <p><strong>{{ _('Email Address') }}:</strong> {{ user.email or _('None') }}</p>
 </div>
-<div style="margin-bottom: 2rem;">
-    <a href="{{ url_for('user.request_cert') }}" class="btn">新しい証明書を要求</a>
+
+<div class="mb-4">
+  <a href="{{ url_for('user.request_cert') }}" class="btn">{{ _('Request New Certificate') }}</a>
 </div>
-<div>
-    <h2>あなたの証明書要求履歴</h2>
-    {% if requests %}
-    <div class="table-responsive">
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>デバイス名</th>
-                <th>ステータス</th>
-                <th>要求日時</th>
-                <th>承認日時</th>
-                <th>証明書有効期限</th>
-                <th>初回DL日時</th>
-                <th>DL期限</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for req in requests %}
-            <tr>
-                <td>{{ req[0] }}</td>
-                <td>{{ req[1] }}</td>
-                <td>
-                    <span class="status-{{ req[2] }}">
-                        {% if req[2] == 'pending' %}承認待ち
-                        {% elif req[2] == 'approved' %}
-                            {% if req[11] == 'pending' %}
-                                承認済み (再承認申請中)
-                            {% else %}
-                                承認済み
-                            {% endif %}
-                        {% elif req[2] == 'rejected' %}拒否
-                        {% elif req[2] == 'revoked' %}無効化済み
-                        {% else %}{{ req[2] }}
-                        {% endif %}
-                    </span>
-                </td>
-                <td>{{ req[3] }}</td>
-                <td>{{ req[4] or '-' }}</td>
-                <td>
-                    {% if req[6] and req[2] == 'approved' %}
-                        <span style="color: #17a2b8; font-weight: 500;">{{ req[6] }}</span>
-                    {% else %}
-                        <span style="color: #6c757d;">-</span>
-                    {% endif %}
-                </td>
-                <td>{{ req[7] or '-' }}</td>
-                <td>
-                    {% if req[2] == 'approved' %}
-                        {% if req[8] %}
-                            {% if req[10] %}
-                                <span style="color: #28a745;">{{ req[8] }}</span>
-                            {% else %}
-                                <span style="color: #dc3545; font-weight: bold;">期限切れ</span>
-                            {% endif %}
-                        {% else %}
-                            <span style="color: #6c757d;">無制限</span>
-                        {% endif %}
-                    {% else %}
-                        -
-                    {% endif %}
-                </td>
-                <td>
-                    {% if req[2] == 'approved' and req[5] %}
-                        {% if req[10] %}
-                            {# ダウンロード可能 #}
-                            <a href="{{ url_for('user.download_cert', cert_serial=req[5]) }}" class="btn" style="font-size: 12px; padding: 4px 8px;">ダウンロード</a>
-                        {% else %}
-                            {# ダウンロード期限切れ #}
-                            {% if req[11] == 'pending' %}
-                                <span style="color: #ffc107; font-size: 12px; font-weight: bold;">再承認申請中</span>
-                            {% elif req[11] == 'rejected' %}
-                            <form method="POST" action="{{ url_for('user.request_reapproval_route', cert_id=req[0]) }}" style="display: inline;">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn" style="font-size: 12px; padding: 4px 8px; background-color: #ffc107; color: #000;">再承認申請 (拒否済)</button>
-                            </form>
-                            {% else %}
-                                <form method="POST" action="{{ url_for('user.request_reapproval_route', cert_id=req[0]) }}" style="display: inline;">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="btn" style="font-size: 12px; padding: 4px 8px; background-color: #ffc107; color: #000;">再承認申請</button>
-                                </form>
-                            {% endif %}
-                        {% endif %}
-                    {% else %}
-                        -
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
+
+<!-- 証明書要求履歴 -->
+<div class="mb-4">
+  <h2>{{ _('Your Certificate Request History') }}</h2>
+  {% if requests %}
+  <div class="table-responsive">
+    <table class="table table-striped table-hover">
+      <thead>
+        <tr>
+          <th>{{ _('ID') }}</th>
+          <th>{{ _('Device Name') }}</th>
+          <th>{{ _('Status') }}</th>
+          <th>{{ _('Requested At') }}</th>
+          <th>{{ _('Approved At') }}</th>
+          <th>{{ _('Certificate Expiry') }}</th>
+          <th>{{ _('First Download') }}</th>
+          <th>{{ _('Download Expiry') }}</th>
+          <th>{{ _('Actions') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for req in requests %}
+        <tr>
+          <td>{{ req[0] }}</td>
+          <td>{{ req[1] }}</td>
+          <td>
+            <span class="status-{{ req[2] }}">
+              {% if req[2] == 'pending' %}{{ _('Pending') }}
+              {% elif req[2] == 'approved' %}
+                {% if req[11] == 'pending' %}
+                  {{ _('Approved (Reapproval Pending)') }}
+                {% else %}
+                  {{ _('Approved') }}
+                {% endif %}
+              {% elif req[2] == 'rejected' %}{{ _('Rejected') }}
+              {% elif req[2] == 'revoked' %}{{ _('Revoked') }}
+              {% else %}{{ req[2] }}
+              {% endif %}
+            </span>
+          </td>
+          <td>{{ req[3] }}</td>
+          <td>{{ req[4] or '-' }}</td>
+          <td>
+            {% if req[6] and req[2] == 'approved' %}
+              <span style="color: #17a2b8; font-weight: 500;">{{ req[6] }}</span>
+            {% else %}
+              <span class="text-muted">-</span>
+            {% endif %}
+          </td>
+          <td>{{ req[7] or '-' }}</td>
+          <td>
+            {% if req[2] == 'approved' %}
+              {% if req[8] %}
+                {% if req[10] %}
+                  <span style="color: #28a745;">{{ req[8] }}</span>
+                {% else %}
+                  <span style="color: #dc3545; font-weight: bold;">{{ _('Expired') }}</span>
+                {% endif %}
+              {% else %}
+                <span class="text-muted">{{ _('Unlimited') }}</span>
+              {% endif %}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td>
+            {% if req[2] == 'approved' and req[5] %}
+              {% if req[10] %}
+                <a href="{{ url_for('user.download_cert', cert_serial=req[5]) }}" class="btn btn-sm">{{ _('Download') }}</a>
+              {% else %}
+                {% if req[11] == 'pending' %}
+                  <span style="color: #ffc107; font-size: 12px; font-weight: bold;">{{ _('Reapproval Pending') }}</span>
+                {% elif req[11] == 'rejected' %}
+                  <form method="POST" action="{{ url_for('user.request_reapproval_route', cert_id=req[0]) }}" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-warning btn-sm">{{ _('Request Reapproval (Rejected)') }}</button>
+                  </form>
+                {% else %}
+                  <form method="POST" action="{{ url_for('user.request_reapproval_route', cert_id=req[0]) }}" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-warning btn-sm">{{ _('Request Reapproval') }}</button>
+                  </form>
+                {% endif %}
+              {% endif %}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
-    </div>
-    {% else %}
-    <p>証明書要求の履歴がありません。</p>
-    {% endif %}
+  </div>
+  {% else %}
+  <p>{{ _('No certificate request history.') }}</p>
+  {% endif %}
 </div>
+
+<!-- VPN接続について -->
 <div style="margin-top: 3rem; padding: 1rem; background-color: #f8f9fa; border-radius: 4px;">
-    <h3>VPN接続について</h3>
-    <p>VPN証明書の要求から使用までの流れ：</p>
-    <ol>
-        <li>「新しい証明書を要求」ボタンから証明書を要求</li>
-        <li>管理者による承認を待機</li>
-        <li>承認後、証明書ファイル（.ovpn）をダウンロード（期限内に）</li>
-        <li>VPNクライアントで証明書ファイルをインポート</li>
-        <li>VPN接続開始</li>
-    </ol>
-    
-    <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">証明書について</h4>
-    <ul style="margin-bottom: 1rem;">
-        <li><strong>証明書の有効期間：</strong> {{ cert_expire_days }}日間（約{{ (cert_expire_days / 365.25) | round(1) }}年）</li>
-        <li><strong>証明書有効期限：</strong> 表の「証明書有効期限」に各証明書の期限日が表示されます</li>
+  <h3>{{ _('About VPN Connection') }}</h3>
+  <p>{{ _('Certificate Request Flow') }}</p>
+  <ol>
+    <li>{{ _('Request certificate') }}</li>
+    <li>{{ _('Wait for approval') }}</li>
+    <li>{{ _('Download certificate') }}</li>
+    <li>{{ _('Import certificate') }}</li>
+    <li>{{ _('Start VPN connection') }}</li>
+  </ol>
+
+  <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">{{ _('About Certificates') }}</h4>
+  <ul class="mb-3">
+    <li><strong>{{ _('Certificate validity period') }}</strong> {{ cert_expire_days }}{{ _('days') }}</li>
+    <li><strong>{{ _('Certificate expiry date') }}</strong> {{ _('Certificate Expiry') }}</li>
+  </ul>
+
+  <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">{{ _('About Download Expiry') }}</h4>
+  <div style="padding: 0.75rem; background-color: #fff3cd; border-left: 3px solid #ffc107; margin-bottom: 1rem;">
+    <ul style="margin: 0;">
+      {% if download_expire_from_approval_hours == 0 %}
+      <li><strong>{{ _('Expiry from approval') }}</strong> {{ _('Unlimited') }}</li>
+      {% else %}
+      <li><strong>{{ _('Expiry from approval') }}</strong> {{ _('within hours', hours=download_expire_from_approval_hours) }}</li>
+      {% endif %}
+
+      {% if download_expire_from_first_download_hours == 0 %}
+      <li>{{ _('Download once only') }}</li>
+      {% else %}
+      <li>{{ _('After first download', hours=download_expire_from_first_download_hours) }}</li>
+      {% endif %}
     </ul>
-    
-    <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">ダウンロード期限について</h4>
-    <div style="padding: 0.75rem; background-color: #fff3cd; border-left: 3px solid #ffc107; margin-bottom: 1rem;">
-        <ul style="margin: 0;">
-            {% if download_expire_from_approval_hours == 0 %}
-            <li><strong>承認からの期限：</strong> 無制限</li>
-            {% else %}
-            <li><strong>承認からの期限：</strong> {{ download_expire_from_approval_hours }}時間以内にダウンロード</li>
-            {% endif %}
-            
-            {% if download_expire_from_first_download_hours == 0 %}
-            <li><strong>ダウンロード回数：</strong> 1回のみ（初回ダウンロード後は即時無効化）</li>
-            {% else %}
-            <li><strong>初回ダウンロード後：</strong> {{ download_expire_from_first_download_hours }}時間以内に再ダウンロード可能</li>
-            {% endif %}
-        </ul>
-    </div>
-    
-    <p style="margin-top: 1rem; padding: 0.5rem; background-color: #d1ecf1; border-left: 3px solid #17a2b8;">
-        <strong>注意：</strong> 「証明書有効期限」は証明書自体の有効期限です。「DL期限」はファイルをダウンロードできる期限です。証明書有効期限が切れた場合は、新しい証明書を要求する必要があります。
-    </p>
-    
-    <p style="margin-top: 1rem; padding: 0.5rem; background-color: #d1ecf1; border-left: 3px solid #17a2b8;">
-        <strong>再承認申請：</strong> ダウンロード期限が切れた場合、「再承認申請」ボタンから申請できます。管理者が承認すると、再度ダウンロード可能になります。
-    </p>
+  </div>
+
+  <p style="margin-top: 1rem; padding: 0.5rem; background-color: #d1ecf1; border-left: 3px solid #17a2b8;">
+    {{ _('Note certificate expiry') }}
+  </p>
+
+  <p style="margin-top: 1rem; padding: 0.5rem; background-color: #d1ecf1; border-left: 3px solid #17a2b8;">
+    {{ _('Note reapproval') }}
+  </p>
 </div>
 {% endblock %}

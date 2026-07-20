@@ -1,0 +1,154 @@
+{#
+  _macros.html - 共通Jinjaマクロ
+  全テンプレートからこのファイルをimportして使う。
+  例: {% from "_macros.html" import stat_card, pagination_numbered, filter_period_js, action_badge %}
+#}
+
+{#
+  stat_card: 統計カード
+  label: カードラベル（文字列）
+  value: 表示する数値・文字列
+  border_class: 'border-primary' / 'border-success' / 'border-danger' / 'border-warning' / 'border-info'
+  text_class: 'text-success' など（省略可）
+  extra_html: カード内に追加するHTML（省略可、safe必要）
+#}
+{% macro stat_card(label, value, border_class='', text_class='', extra_html='') %}
+<div class="card {{ border_class }}">
+  <div class="card-body">
+    <h5 class="card-title">{{ label }}</h5>
+    <p class="card-text display-6 {{ text_class }}">{{ value }}</p>
+    {% if extra_html %}{{ extra_html | safe }}{% endif %}
+  </div>
+</div>
+{% endmacro %}
+
+{#
+  pagination_numbered: ページ番号付きページネーション（vpn_connections型）
+  pagination: has_prev/has_next/prev_page/next_page/page/total_pages/total_count/per_page を持つdict
+  filters: クエリパラメータdict（pageを除く）
+  endpoint: url_for のエンドポイント名文字列
+#}
+{% macro pagination_numbered(pagination, filters, endpoint) %}
+{% if pagination.total_pages > 1 %}
+<nav aria-label="{{ _('Pagination') }}">
+  <ul class="pagination justify-content-center">
+    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+      {% if pagination.has_prev %}
+        <a class="page-link" href="{{ url_for(endpoint, page=pagination.prev_page, **filters) }}">{{ _('Previous') }}</a>
+      {% else %}
+        <span class="page-link">{{ _('Previous') }}</span>
+      {% endif %}
+    </li>
+
+    {% for p in range(1, pagination.total_pages + 1) %}
+      {% if p == pagination.page %}
+        <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+      {% elif (p <= 3) or (p >= pagination.total_pages - 2) or (p >= pagination.page - 2 and p <= pagination.page + 2) %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for(endpoint, page=p, **filters) }}">{{ p }}</a>
+        </li>
+      {% elif p == 4 or p == pagination.total_pages - 3 %}
+        <li class="page-item disabled"><span class="page-link">...</span></li>
+      {% endif %}
+    {% endfor %}
+
+    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+      {% if pagination.has_next %}
+        <a class="page-link" href="{{ url_for(endpoint, page=pagination.next_page, **filters) }}">{{ _('Next') }}</a>
+      {% else %}
+        <span class="page-link">{{ _('Next') }}</span>
+      {% endif %}
+    </li>
+  </ul>
+</nav>
+{% if pagination.total_count > 0 %}
+<p class="text-center text-muted">
+  {{ _('Displaying items', from=((pagination.page - 1) * pagination.per_page + 1), to=[pagination.page * pagination.per_page, pagination.total_count] | min, total=pagination.total_count) }}
+</p>
+{% endif %}
+{% endif %}
+{% endmacro %}
+
+{#
+  pagination_simple: 前へ/次へのみの簡易ページネーション（audit_logs/admin_revoked型）
+  pagination: has_prev/has_next/prev_page/next_page/page/total_pages を持つdict
+  filters: クエリパラメータdict（pageを除く）
+  endpoint: url_for のエンドポイント名文字列
+#}
+{% macro pagination_simple(pagination, filters, endpoint) %}
+{% if pagination.total_pages > 1 %}
+<div class="d-flex justify-content-center gap-2 mb-4" style="align-items: center;">
+  {% if pagination.has_prev %}
+    <a href="{{ url_for(endpoint, page=1, **filters) }}" class="btn btn-secondary btn-sm">{{ _('First') }}</a>
+    <a href="{{ url_for(endpoint, page=pagination.prev_page, **filters) }}" class="btn btn-secondary btn-sm">{{ _('Previous') }}</a>
+  {% endif %}
+  <span class="text-muted" style="padding: 0 0.5rem;">{{ pagination.page }} / {{ pagination.total_pages }}</span>
+  {% if pagination.has_next %}
+    <a href="{{ url_for(endpoint, page=pagination.next_page, **filters) }}" class="btn btn-secondary btn-sm">{{ _('Next') }}</a>
+    <a href="{{ url_for(endpoint, page=pagination.total_pages, **filters) }}" class="btn btn-secondary btn-sm">{{ _('Last') }}</a>
+  {% endif %}
+</div>
+{% endif %}
+{% endmacro %}
+
+{#
+  action_badge: 監査ログ・最近の活動のアクションバッジ
+  action_raw: DBのアクション生値（'request'/'approve'/'reject'/'revoke'/'download'等）
+  action: 表示テキスト（翻訳済み）
+#}
+{% macro action_badge(action_raw, action) %}
+{% if action_raw == 'request' %}
+  <span style="background-color: #cce5ff; color: #004085; padding: 2px 6px; border-radius: 3px; font-size: 12px;">{{ action }}</span>
+{% elif action_raw == 'approve' or action_raw == 'approve_reapproval' %}
+  <span style="background-color: #d4edda; color: #155724; padding: 2px 6px; border-radius: 3px; font-size: 12px;">{{ action }}</span>
+{% elif action_raw == 'reject' or action_raw == 'reject_reapproval' %}
+  <span style="background-color: #f8d7da; color: #721c24; padding: 2px 6px; border-radius: 3px; font-size: 12px;">{{ action }}</span>
+{% elif action_raw == 'revoke' %}
+  <span style="background-color: #fff3cd; color: #856404; padding: 2px 6px; border-radius: 3px; font-size: 12px;">{{ action }}</span>
+{% elif action_raw == 'download' %}
+  <span style="background-color: #e2e3e5; color: #495057; padding: 2px 6px; border-radius: 3px; font-size: 12px;">{{ action }}</span>
+{% else %}
+  <span style="background-color: #f8f9fa; color: #495057; padding: 2px 6px; border-radius: 3px; font-size: 12px;">{{ action }}</span>
+{% endif %}
+{% endmacro %}
+
+{#
+  filter_period_js: カスタム期間選択時の日付欄有効化JS
+  period_id: period <select> のid（省略時 'period'）
+  date_from_id: date_from <input> のid（省略時 'date_from'）
+  date_to_id: date_to <input> のid（省略時 'date_to'）
+#}
+{% macro filter_period_js(period_id='period', date_from_id='date_from', date_to_id='date_to') %}
+<script>
+(function() {
+  var periodEl = document.getElementById('{{ period_id }}');
+  var fromEl = document.getElementById('{{ date_from_id }}');
+  var toEl = document.getElementById('{{ date_to_id }}');
+  function syncDateFields() {
+    var isCustom = periodEl.value === 'custom';
+    fromEl.disabled = !isCustom;
+    toEl.disabled = !isCustom;
+  }
+  periodEl.addEventListener('change', syncDateFields);
+  syncDateFields();
+})();
+</script>
+{% endmacro %}
+
+{#
+  info_box: 情報ボックス（ヘルプ・説明欄）
+  title: 見出し（省略可）
+  color_class: 'info'（青）/ 'warning'（黄）/ 'success'（緑）のいずれか（省略時 'info'）
+  caller(): ブロック本体
+#}
+{% macro info_box(title='', color_class='info') %}
+{% set border_map = {'info': '#17a2b8', 'warning': '#ffc107', 'success': '#28a745'} %}
+{% set bg_map = {'info': '#e7f3ff', 'warning': '#fff9e6', 'success': '#d4edda'} %}
+{% set text_map = {'info': '#004085', 'warning': '#856404', 'success': '#155724'} %}
+<div style="margin-top: 2rem; padding: 1rem; background-color: {{ bg_map.get(color_class, '#e7f3ff') }}; border-left: 4px solid {{ border_map.get(color_class, '#17a2b8') }}; border-radius: 4px;">
+  {% if title %}<h4 style="margin-top: 0; color: {{ text_map.get(color_class, '#004085') }};">{{ title }}</h4>{% endif %}
+  <div style="color: {{ text_map.get(color_class, '#004085') }}; font-size: 14px;">
+    {{ caller() }}
+  </div>
+</div>
+{% endmacro %}

@@ -1,209 +1,225 @@
 {% extends "base.html" %}
 
-{% block title %}管理画面 - VPN Certificate Manager{% endblock %}
+{% block title %}{{ _('Admin Dashboard') }} - {{ _('VPN Certificate Manager') }}{% endblock %}
 
 {% block content %}
-<div style="margin-bottom: 1rem;">
-    <h1>管理画面</h1>
-    <p style="color: #6c757d; margin: 0;">VPN証明書の管理と監査を行います</p>
+<div class="mb-3">
+  <h1>{{ _('Admin Dashboard') }}</h1>
+  <p class="text-muted" style="margin: 0;">{{ _('Manage and audit VPN certificates') }}</p>
 </div>
 
-<div style="margin-bottom: 2rem;">
-    <h2>承認待ちの証明書要求</h2>
-    {% if pending_requests %}
-    <div class="table-responsive">
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>ユーザー名</th>
-                <th>デバイス名</th>
-                <th>要求理由</th>
-                <th>要求日時</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for req in pending_requests %}
-            <tr>
-                <td>{{ req[0] }}</td>
-                <td>{{ req[1] }}</td>
-                <td>{{ req[2] }}</td>
-                <td>{{ req[3] or '-' }}</td>
-                <td>{{ req[4] }}</td>
-                <td>
-                    <form method="POST" action="{{ url_for('admin_certs.approve_cert', req_id=req[0]) }}" style="display: inline-block; margin: 0;">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-success"
-                                style="font-size: 12px; padding: 4px 8px; margin-right: 5px; cursor: pointer;"
-                                onclick="return confirm('この証明書要求を承認しますか？')">承認</button>
-                    </form>
-                    <form method="POST" action="{{ url_for('admin_certs.reject_cert', req_id=req[0]) }}" style="display: inline-block; margin: 0;">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-danger"
-                                style="font-size: 12px; padding: 4px 8px; cursor: pointer;"
-                                onclick="return confirm('この証明書要求を拒否しますか？')">拒否</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
+<!-- 承認待ちの証明書要求 -->
+<div class="mb-4">
+  <h2>{{ _('Pending Certificate Requests') }}</h2>
+  {% if pending_requests %}
+  <div class="table-responsive">
+    <table class="table table-striped table-hover">
+      <thead>
+        <tr>
+          <th>{{ _('ID') }}</th>
+          <th>{{ _('Username') }}</th>
+          <th>{{ _('Device Name') }}</th>
+          <th>{{ _('Reason') }}</th>
+          <th>{{ _('Requested At') }}</th>
+          <th>{{ _('Actions') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for req in pending_requests %}
+        <tr>
+          <td>{{ req[0] }}</td>
+          <td>{{ req[1] }}</td>
+          <td>{{ req[2] }}</td>
+          <td>{{ req[3] or '-' }}</td>
+          <td>{{ req[4] }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('admin_certs.approve_cert', req_id=req[0]) }}" style="display: inline-block; margin: 0;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-success btn-sm"
+                      onclick="return confirm('この証明書要求を承認しますか？')">{{ _('Approve') }}</button>
+            </form>
+            <form method="POST" action="{{ url_for('admin_certs.reject_cert', req_id=req[0]) }}" style="display: inline-block; margin: 0; margin-left: 4px;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-danger btn-sm"
+                      onclick="return confirm('この証明書要求を拒否しますか？')">{{ _('Reject') }}</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
-    </div>
-    {% else %}
-    <div style="padding: 1rem; background-color: #f8f9fa; border-radius: 4px; color: #6c757d;">
-        <p style="margin: 0;">承認待ちの要求はありません。</p>
-    </div>
-    {% endif %}
+  </div>
+  {% else %}
+  <div style="padding: 1rem; background-color: #f8f9fa; border-radius: 4px;" class="text-muted">
+    <p style="margin: 0;">{{ _('No pending requests') }}</p>
+  </div>
+  {% endif %}
 </div>
 
-<div style="margin-bottom: 2rem;">
-    <h2>再承認申請中の証明書</h2>
-    {% if reapproval_requests %}
-    <div class="table-responsive">
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>ユーザー名</th>
-                <th>デバイス名</th>
-                <th>証明書ID</th>
-                <th>申請日時</th>
-                <th>元の承認日時</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for req in reapproval_requests %}
-            <tr>
-                <td>{{ req[0] }}</td>
-                <td>{{ req[1] }}</td>
-                <td>{{ req[2] }}</td>
-                <td>{{ req[3] }}</td>
-                <td>{{ req[4] }}</td>
-                <td>{{ req[5] }}</td>
-                <td>
-                    <form method="POST" action="{{ url_for('admin_certs.approve_reapproval_request', cert_id=req[0]) }}" style="display: inline-block; margin: 0;">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-success"
-                                style="font-size: 12px; padding: 4px 8px; margin-right: 5px; cursor: pointer;"
-                                onclick="return confirm('この再承認申請を承認しますか？')">再承認</button>
-                    </form>
-                    <form method="POST" action="{{ url_for('admin_certs.reject_reapproval_request', cert_id=req[0]) }}" style="display: inline-block; margin: 0;">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-danger"
-                                style="font-size: 12px; padding: 4px 8px; cursor: pointer;"
-                                onclick="return confirm('この再承認申請を拒否しますか？')">拒否</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
+<!-- 再承認申請中の証明書 -->
+<div class="mb-4">
+  <h2>{{ _('Reapproval Requests') }}</h2>
+  {% if reapproval_requests %}
+  <div class="table-responsive">
+    <table class="table table-striped table-hover">
+      <thead>
+        <tr>
+          <th>{{ _('ID') }}</th>
+          <th>{{ _('Username') }}</th>
+          <th>{{ _('Device Name') }}</th>
+          <th>{{ _('Certificate ID') }}</th>
+          <th>{{ _('Application Date') }}</th>
+          <th>{{ _('Original Approval Date') }}</th>
+          <th>{{ _('Actions') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for req in reapproval_requests %}
+        <tr>
+          <td>{{ req[0] }}</td>
+          <td>{{ req[1] }}</td>
+          <td>{{ req[2] }}</td>
+          <td>{{ req[3] }}</td>
+          <td>{{ req[4] }}</td>
+          <td>{{ req[5] }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('admin_certs.approve_reapproval_request', cert_id=req[0]) }}" style="display: inline-block; margin: 0;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-success btn-sm"
+                      onclick="return confirm('この再承認申請を承認しますか？')">{{ _('Reapprove') }}</button>
+            </form>
+            <form method="POST" action="{{ url_for('admin_certs.reject_reapproval_request', cert_id=req[0]) }}" style="display: inline-block; margin: 0; margin-left: 4px;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-danger btn-sm"
+                      onclick="return confirm('この再承認申請を拒否しますか？')">{{ _('Reject') }}</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
-    </div>
-    {% else %}
-    <div style="padding: 1rem; background-color: #f8f9fa; border-radius: 4px; color: #6c757d;">
-        <p style="margin: 0;">再承認申請はありません。</p>
-    </div>
-    {% endif %}
+  </div>
+  {% else %}
+  <div style="padding: 1rem; background-color: #f8f9fa; border-radius: 4px;" class="text-muted">
+    <p style="margin: 0;">{{ _('No reapproval requests') }}</p>
+  </div>
+  {% endif %}
 </div>
 
-<div style="margin-bottom: 2rem;">
-    <h2>管理機能</h2>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-        <div style="border: 1px solid #dee2e6; border-radius: 4px; padding: 1rem; display: flex; flex-direction: column;">
-            <h4 style="margin-top: 0; color: #495057;">証明書管理</h4>
-            <p style="font-size: 14px; color: #6c757d; margin-bottom: 1rem; flex: 1;">発行済み証明書の一覧・取り消し・再承認</p>
-            <a href="{{ url_for('admin_certs.certificates') }}" class="btn">証明書一覧</a>
+<!-- 管理機能 -->
+<div class="mb-4">
+  <h2>{{ _('Admin Functions') }}</h2>
+  <div class="row g-3">
+    <div class="col-3">
+      <div class="card" style="height: 100%; display: flex; flex-direction: column;">
+        <div class="card-body" style="display: flex; flex-direction: column;">
+          <h4 class="card-title" style="color: #495057;">{{ _('Certificate Management') }}</h4>
+          <p style="font-size: 14px; color: #6c757d; flex: 1;">{{ _('Certificate list desc') }}</p>
+          <a href="{{ url_for('admin_certs.certificates') }}" class="btn">{{ _('Certificate List') }}</a>
         </div>
-        
-        <div style="border: 1px solid #dee2e6; border-radius: 4px; padding: 1rem; display: flex; flex-direction: column;">
-            <h4 style="margin-top: 0; color: #495057;">削除済み証明書</h4>
-            <p style="font-size: 14px; color: #6c757d; margin-bottom: 1rem; flex: 1;">無効化・削除された証明書の履歴</p>
-            <a href="{{ url_for('admin_logs.revoked_certificates') }}" class="btn">削除済み一覧</a>
-        </div>
-        
-        <div style="border: 1px solid #dee2e6; border-radius: 4px; padding: 1rem; display: flex; flex-direction: column;">
-            <h4 style="margin-top: 0; color: #495057;">監査・ログ</h4>
-            <p style="font-size: 14px; color: #6c757d; margin-bottom: 1rem; flex: 1;">システムの監査ログ表示・CSV出力</p>
-            <a href="{{ url_for('admin_logs.audit_logs') }}" class="btn">監査ログ</a>
-        </div>
-        
-        <div style="border: 1px solid #dee2e6; border-radius: 4px; padding: 1rem; display: flex; flex-direction: column;">
-            <h4 style="margin-top: 0; color: #495057;">VPN接続履歴</h4>
-            <p style="font-size: 14px; color: #6c757d; margin-bottom: 1rem; flex: 1;">VPN接続・切断の履歴とログ分析</p>
-            <a href="{{ url_for('admin_logs.vpn_connections') }}" class="btn">接続履歴</a>
-        </div>
-        
-        <div style="border: 1px solid #dee2e6; border-radius: 4px; padding: 1rem; display: flex; flex-direction: column;">
-            <h4 style="margin-top: 0; color: #495057;">システム状態確認</h4>
-            <p style="font-size: 14px; color: #6c757d; margin-bottom: 1rem; flex: 1;">VPNサーバーの稼働状態・API接続確認</p>
-            <a href="{{ url_for('admin_system.system_status') }}" class="btn">状態確認</a>
-        </div>
+      </div>
     </div>
+    <div class="col-3">
+      <div class="card" style="height: 100%; display: flex; flex-direction: column;">
+        <div class="card-body" style="display: flex; flex-direction: column;">
+          <h4 class="card-title" style="color: #495057;">{{ _('Revoked Certificates') }}</h4>
+          <p style="font-size: 14px; color: #6c757d; flex: 1;">{{ _('Revoked list desc') }}</p>
+          <a href="{{ url_for('admin_logs.revoked_certificates') }}" class="btn">{{ _('Revoked List') }}</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-3">
+      <div class="card" style="height: 100%; display: flex; flex-direction: column;">
+        <div class="card-body" style="display: flex; flex-direction: column;">
+          <h4 class="card-title" style="color: #495057;">{{ _('Audit & Logs') }}</h4>
+          <p style="font-size: 14px; color: #6c757d; flex: 1;">{{ _('Audit desc') }}</p>
+          <a href="{{ url_for('admin_logs.audit_logs') }}" class="btn">{{ _('Audit Logs') }}</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-3">
+      <div class="card" style="height: 100%; display: flex; flex-direction: column;">
+        <div class="card-body" style="display: flex; flex-direction: column;">
+          <h4 class="card-title" style="color: #495057;">{{ _('VPN Connection History') }}</h4>
+          <p style="font-size: 14px; color: #6c757d; flex: 1;">{{ _('VPN history desc') }}</p>
+          <a href="{{ url_for('admin_logs.vpn_connections') }}" class="btn">{{ _('Connection History') }}</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-3">
+      <div class="card" style="height: 100%; display: flex; flex-direction: column;">
+        <div class="card-body" style="display: flex; flex-direction: column;">
+          <h4 class="card-title" style="color: #495057;">{{ _('System Status') }}</h4>
+          <p style="font-size: 14px; color: #6c757d; flex: 1;">{{ _('System status desc') }}</p>
+          <a href="{{ url_for('admin_system.system_status') }}" class="btn">{{ _('Status Check') }}</a>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<div style="margin-top: 3rem; padding: 1rem; background-color: #f8f9fa; border-radius: 4px;">
-    <h3>管理者ガイド</h3>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-        <div>
-            <h4>証明書承認のポイント</h4>
-            <ul style="margin: 0;">
-                <li>ユーザーの身元と要求の妥当性を確認</li>
-                <li>デバイス名が適切で重複していないかチェック</li>
-                <li>同一ユーザーでも複数デバイス用証明書の発行は可能</li>
-                <li>承認時にダウンロード期限が自動設定されます</li>
-            </ul>
-        </div>
-        <div>
-            <h4>ダウンロード期限管理</h4>
-            <ul style="margin: 0;">
-                <li>証明書ダウンロードには期限が設定されています</li>
-                <li>期限切れの証明書は「再承認」で延長可能</li>
-                <li><strong>ユーザーからの再承認申請を承認/拒否できます</strong></li>
-                <li>再承認すると初回ダウンロード記録がリセットされます</li>
-                <li>期限設定は.envファイルで柔軟にカスタマイズ可能</li>
-            </ul>
-        </div>
-        <div>
-            <h4>セキュリティ注意事項</h4>
-            <ul style="margin: 0;">
-                <li>不審な要求や不正使用の疑いがある場合は拒否</li>
-                <li>定期的に監査ログをチェック</li>
-                <li>不要な証明書は速やかに取り消し</li>
-                <li>ダウンロード期限により証明書の不正取得リスクを軽減</li>
-            </ul>
-        </div>
+<!-- 管理者ガイド -->
+<div style="margin-top: 2rem; padding: 1rem; background-color: #f8f9fa; border-radius: 4px;">
+  <h3>{{ _('Admin Guide') }}</h3>
+  <div class="row g-3">
+    <div class="col-3">
+      <h4>{{ _('Certificate Approval Points') }}</h4>
+      <ul style="margin: 0;">
+        <li>{{ _('Verify user identity') }}</li>
+        <li>{{ _('Check device name') }}</li>
+        <li>{{ _('Multiple devices ok') }}</li>
+        <li>{{ _('Auto expiry set') }}</li>
+      </ul>
     </div>
+    <div class="col-3">
+      <h4>{{ _('Download Expiry Management') }}</h4>
+      <ul style="margin: 0;">
+        <li>{{ _('Expiry is set') }}</li>
+        <li>{{ _('Reapprove to extend') }}</li>
+        <li><strong>{{ _('User can request') }}</strong></li>
+        <li>{{ _('First download reset') }}</li>
+        <li>{{ _('Customizable expiry') }}</li>
+      </ul>
+    </div>
+    <div class="col-3">
+      <h4>{{ _('Security Notes') }}</h4>
+      <ul style="margin: 0;">
+        <li>{{ _('Reject suspicious') }}</li>
+        <li>{{ _('Check audit logs') }}</li>
+        <li>{{ _('Revoke unused') }}</li>
+        <li>{{ _('Expiry reduces risk') }}</li>
+      </ul>
+    </div>
+  </div>
 </div>
 
+<!-- 機能説明 -->
 <div style="margin-top: 2rem; padding: 1rem; background-color: #d1ecf1; border-left: 4px solid #17a2b8; border-radius: 4px;">
-    <div style="color: #0c5460;">
-        <p style="margin: 0 0 10px 0;"><strong>証明書管理機能:</strong></p>
-        <ul style="margin: 0 0 15px 0;">
-            <li>証明書要求・承認・拒否</li>
-            <li>証明書一覧表示・無効化</li>
-            <li>削除済み証明書の履歴表示（フィルタリング・ページネーション対応）</li>
-            <li><strong>ダウンロード期限制御（承認時・初回DL時の柔軟な期限設定）</strong></li>
-            <li><strong>期限切れ証明書の再承認機能</strong></li>
-            <li><strong>ユーザーからの再承認申請機能（NEW!）</strong></li>
-        </ul>
-        
-        <p style="margin: 0 0 10px 0;"><strong>監査・セキュリティ機能:</strong></p>
-        <ul style="margin: 0 0 15px 0;">
-            <li>全操作の監査ログ記録</li>
-            <li>監査ログの詳細フィルタリング・検索</li>
-            <li>監査ログのCSV出力</li>
-            <li>システム状態・API接続確認</li>
-        </ul>
-        
-        <p style="margin: 0 0 10px 0;"><strong>システム設定:</strong></p>
-        <ul style="margin: 0;">
-            <li>環境変数による柔軟な設定</li>
-            <li>ダウンロード期限のカスタマイズ（承認からの期限・初回DL後の期限）</li>
-            <li>ログローテーション設定（サイズ・時間ベース）</li>
-            <li>証明書有効期間の設定</li>
-        </ul>
-    </div>
+  <div style="color: #0c5460;">
+    <p style="margin: 0 0 10px 0;"><strong>{{ _('Certificate Management Features') }}</strong></p>
+    <ul style="margin: 0 0 15px 0;">
+      <li>{{ _('Request approval flow') }}</li>
+      <li>{{ _('User time IP recorded') }}</li>
+      <li>{{ _('Filter search') }}</li>
+      <li>{{ _('CSV export') }}</li>
+      <li><strong>{{ _('Download expiry control') }}</strong></li>
+      <li><strong>{{ _('Reapproval feature') }}</strong></li>
+      <li><strong>{{ _('User reapproval request') }}</strong></li>
+    </ul>
+    <p style="margin: 0 0 10px 0;"><strong>{{ _('Audit & Security Features') }}</strong></p>
+    <ul style="margin: 0 0 15px 0;">
+      <li>{{ _('All operations logged') }}</li>
+      <li>{{ _('Detailed filtering') }}</li>
+      <li>{{ _('Audit CSV export') }}</li>
+      <li>{{ _('System health check') }}</li>
+    </ul>
+    <p style="margin: 0 0 10px 0;"><strong>{{ _('System Settings') }}</strong></p>
+    <ul style="margin: 0;">
+      <li>{{ _('Flexible env config') }}</li>
+      <li>{{ _('Customizable download expiry') }}</li>
+      <li>{{ _('Log rotation') }}</li>
+      <li>{{ _('Cert validity config') }}</li>
+    </ul>
+  </div>
 </div>
 {% endblock %}

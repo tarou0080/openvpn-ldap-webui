@@ -63,7 +63,7 @@ def get_log_info():
         else:
             log_info['app_log_error'] = _('Log file not found')
     except Exception as e:
-        log_info['app_log_error'] = _('Error retrieving log file information: %(error)s', error=str(e))
+        log_info['app_log_error'] = _('Error retrieving log file information: {error}', error=str(e))
     return log_info
 
 def get_recent_activities():
@@ -91,7 +91,7 @@ def get_recent_activities():
         conn.close()
     except Exception as e:
         logger.error(f"Recent activities fetch error: {str(e)}")
-        activities = [{'error': _('Error fetching recent activities: %(error)s', error=str(e))}]
+        activities = [{'error': _('Error fetching recent activities: {error}', error=str(e))}]
     return activities
 
 def get_scheduler_status():

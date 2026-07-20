@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-07-20
+
+### Added
+
+- **Connection history filtering now works**: the period, date range, username, certificate name (partial match) and connection status filters are applied to the history table, the summary cards, pagination and CSV export. Previously the filter form was displayed but had no effect. All conditions are bound as SQL parameters; partial-match input is LIKE-escaped.
+- **CSV export now contains data**: the exported file previously contained placeholder text only; it now includes a header row and all connection records matching the current filters.
+- **Complete English/Japanese localization**: every page (dashboard, certificate request, certificate lists, audit log, connection history, system status) now follows the language selector, including flash messages and audit-log action names. Previously most pages were hard-coded in Japanese, and some messages displayed raw translation keys.
+
+### Changed
+
+- **Shared template components**: statistics cards, pagination, audit action badges and the custom-period date-picker behavior are now Jinja macros shared across admin pages, and per-page inline styling has been migrated to the common stylesheet, so all admin pages share one consistent look. Filter period options now use the same wording on every page.
+- Translation catalogs were cleaned up: unused entries removed, missing entries added, and the English and Japanese catalogs are verified to contain the same key set.
+
+### Fixed
+
+- **Date fields no longer overflow on mobile**: form inputs are capped to the container width, and form fields keep a 16px font size on small screens so iOS no longer zooms in when they receive focus.
+- Error messages that rendered a literal `%(error)s` placeholder now display the actual error text.
+- The `vpn_connections` table schema now includes the `disconnection_type` column for new installations (the log parser already wrote it; existing databases are migrated automatically at startup if the column is missing).
+
 ## [1.1.2] - 2026-07-20
 
 ### Fixed

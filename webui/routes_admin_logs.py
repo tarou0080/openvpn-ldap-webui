@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import csv
 import sqlite3
 import logging
 import io
@@ -101,7 +102,7 @@ def revoked_certificates():
                                  available_users=available_users, statistics=statistics)
     except Exception as e:
         logger.error(f"Revoked certificates fetch error: {str(e)}")
-        flash(_('Failed to retrieve revoked certificates: %(error)s', error=str(e)), 'error')
+        flash(_('Failed to retrieve revoked certificates: {error}', error=str(e)), 'error')
         return redirect(url_for('user.index'))
 
 @admin_logs_bp.route('/audit-logs')
@@ -171,14 +172,15 @@ def audit_logs():
         
         pagination = {
             'page': page, 'total_pages': total_pages, 'total_count': total_count, 'per_page': per_page,
-            'has_prev': page > 1, 'has_next': page < total_pages
+            'has_prev': page > 1, 'has_next': page < total_pages,
+            'prev_page': page - 1 if page > 1 else None, 'next_page': page + 1 if page < total_pages else None
         }
         filters = {'period': period_filter, 'action': action_filter, 'username': username_filter, 'date_from': date_from, 'date_to': date_to}
         
         return render_with_context('audit_logs.html', audit_logs=processed_logs, pagination=pagination, filters=filters, available_users=available_users)
     except Exception as e:
         logger.error(f"Audit logs fetch error: {str(e)}")
-        flash(_('Failed to retrieve audit logs: %(error)s', error=str(e)), 'error')
+        flash(_('Failed to retrieve audit logs: {error}', error=str(e)), 'error')
         return redirect(url_for('admin_logs.audit_logs'))
 
 @admin_logs_bp.route('/audit-logs/export')
@@ -219,36 +221,88 @@ def audit_logs_export():
         return response
     except Exception as e:
         logger.error(f"Audit logs export error: {str(e)}")
-        flash(_('Failed to export audit logs: %(error)s', error=str(e)), 'error')
+        flash(_('Failed to export audit logs: {error}', error=str(e)), 'error')
         return redirect(url_for('admin_logs.audit_logs'))
+
+def _build_vpn_where_clause(period_filter, date_from, date_to, username_filter, cert_filter, status_filter):
+    """Build WHERE clause and params list for vpn_connections queries.
+
+    Returns (where_clause_str, params_list).
+    where_clause_str is empty string when no conditions apply.
+    """
+    where_conditions = []
+    params = []
+
+    if period_filter == '1day':
+        where_conditions.append("connected_at >= datetime('now', '-1 day')")
+    elif period_filter == '1week':
+        where_conditions.append("connected_at >= datetime('now', '-7 days')")
+    elif period_filter == '1month':
+        where_conditions.append("connected_at >= datetime('now', '-1 month')")
+    elif period_filter == 'custom' and date_from and date_to:
+        where_conditions.append("date(connected_at) BETWEEN ? AND ?")
+        params.extend([date_from, date_to])
+    elif period_filter == 'custom' and date_from:
+        where_conditions.append("date(connected_at) >= ?")
+        params.append(date_from)
+    elif period_filter == 'custom' and date_to:
+        where_conditions.append("date(connected_at) <= ?")
+        params.append(date_to)
+
+    if username_filter:
+        where_conditions.append("username LIKE ? ESCAPE '\\'")
+        params.append(f"%{escape_like(username_filter)}%")
+
+    if cert_filter:
+        where_conditions.append("cert_common_name LIKE ? ESCAPE '\\'")
+        params.append(f"%{escape_like(cert_filter)}%")
+
+    if status_filter == 'connected':
+        where_conditions.append("disconnected_at IS NULL")
+    elif status_filter == 'disconnected':
+        where_conditions.append("disconnected_at IS NOT NULL")
+
+    where_clause = " WHERE " + " AND ".join(where_conditions) if where_conditions else ""
+    return where_clause, params
+
 
 @admin_logs_bp.route('/vpn-connections')
 def vpn_connections():
     """Display VPN connection history"""
     if error_response := require_admin():
         return error_response
-    
-    # ... (filtering and pagination logic omitted for brevity)
+
     page = request.args.get('page', 1, type=int)
+    period_filter = request.args.get('period', 'all')
+    date_from = request.args.get('date_from', '')
+    date_to = request.args.get('date_to', '')
+    username_filter = request.args.get('username', '')
+    cert_filter = request.args.get('cert', '')
+    status_filter = request.args.get('status', 'all')
     per_page = 50
+
     try:
         conn = sqlite3.connect(DATABASE_PATH)
         cursor = conn.cursor()
-        # ... build where_clause and params ...
-        count_query = f"SELECT COUNT(*) FROM vpn_connections"
-        cursor.execute(count_query)
+
+        where_clause, params = _build_vpn_where_clause(
+            period_filter, date_from, date_to, username_filter, cert_filter, status_filter
+        )
+
+        count_query = f"SELECT COUNT(*) FROM vpn_connections{where_clause}"
+        cursor.execute(count_query, params)
         total_count = cursor.fetchone()[0]
         total_pages = (total_count + per_page - 1) // per_page
         offset = (page - 1) * per_page
 
         data_query = f"""
-            SELECT id, username, cert_common_name, client_ip, vpn_ip, 
+            SELECT id, username, cert_common_name, client_ip, vpn_ip,
                    connected_at, disconnected_at, duration_seconds, disconnection_type
-            FROM vpn_connections ORDER BY connected_at DESC LIMIT ? OFFSET ?
+            FROM vpn_connections{where_clause} ORDER BY connected_at DESC LIMIT ? OFFSET ?
         """
-        cursor.execute(data_query, [per_page, offset])
+        cursor.execute(data_query, params + [per_page, offset])
         connections_raw = cursor.fetchall()
-        
+
         connections = []
         for row in connections_raw:
             converted_row = list(convert_db_row_timestamps(row, [5, 6]))
@@ -256,18 +310,27 @@ def vpn_connections():
             converted_row.append(row[6] is None)
             connections.append(tuple(converted_row))
 
-        cursor.execute(
-            "SELECT COUNT(*), "
-            "SUM(CASE WHEN disconnected_at IS NULL THEN 1 ELSE 0 END), "
-            "COUNT(DISTINCT username) "
-            "FROM vpn_connections"
+        # Statistics follow the same filter, with "currently connected" adding IS NULL
+        stat_query = (
+            f"SELECT COUNT(*), "
+            f"SUM(CASE WHEN disconnected_at IS NULL THEN 1 ELSE 0 END), "
+            f"COUNT(DISTINCT username) "
+            f"FROM vpn_connections{where_clause}"
         )
+        cursor.execute(stat_query, params)
         stat_row = cursor.fetchone()
         statistics = {
             'total_connections': stat_row[0],
             'currently_connected': stat_row[1] or 0,
             'unique_users': stat_row[2],
         }
+
+        cursor.execute("SELECT DISTINCT username FROM vpn_connections ORDER BY username")
+        available_users = [row[0] for row in cursor.fetchall()]
+
+        cursor.execute("SELECT DISTINCT cert_common_name FROM vpn_connections ORDER BY cert_common_name")
+        available_certs = [row[0] for row in cursor.fetchall()]
+
         conn.close()
 
         pagination = {
@@ -276,29 +339,27 @@ def vpn_connections():
             'total_pages': total_pages,
             'total_count': total_count,
             'has_prev': page > 1,
-            'prev_page': page - 1,
+            'prev_page': page - 1 if page > 1 else None,
             'has_next': page < total_pages,
-            'next_page': page + 1,
+            'next_page': page + 1 if page < total_pages else None,
         }
         filters = {
-            'period': '',
-            'username': '',
-            'cert': '',
-            'date_from': '',
-            'date_to': '',
-            'status': '',
+            'period': period_filter,
+            'username': username_filter,
+            'cert': cert_filter,
+            'date_from': date_from,
+            'date_to': date_to,
+            'status': status_filter,
         }
-        available_users = []
-        available_certs = []
         scheduler_status = get_scheduler_status()
 
-        return render_with_context('vpn_connections.html', 
+        return render_with_context('vpn_connections.html',
                                  connections=connections, pagination=pagination, filters=filters,
                                  available_users=available_users, available_certs=available_certs,
                                  statistics=statistics, scheduler_status=scheduler_status)
     except Exception as e:
         logger.error(f"VPN connections fetch error: {str(e)}")
-        flash(_('Failed to retrieve VPN connection history: %(error)s', error=str(e)), 'error')
+        flash(_('Failed to retrieve VPN connection history: {error}', error=str(e)), 'error')
         return redirect(url_for('user.index'))
 
 @admin_logs_bp.route('/vpn-connections/export')
@@ -306,34 +367,60 @@ def vpn_connections_export():
     """Export VPN connection history to CSV"""
     if error_response := require_admin():
         return error_response
-    
+
     user = get_user_from_headers()
     try:
-        # ... (filtering logic omitted for brevity) ...
+        period_filter = request.args.get('period', 'all')
+        date_from = request.args.get('date_from', '')
+        date_to = request.args.get('date_to', '')
+        username_filter = request.args.get('username', '')
+        cert_filter = request.args.get('cert', '')
+        status_filter = request.args.get('status', 'all')
+
+        where_clause, params = _build_vpn_where_clause(
+            period_filter, date_from, date_to, username_filter, cert_filter, status_filter
+        )
+
         conn = sqlite3.connect(DATABASE_PATH)
         cursor = conn.cursor()
         query = f"""
-            SELECT username, cert_common_name, client_ip, vpn_ip, 
+            SELECT username, cert_common_name, client_ip, vpn_ip,
                    connected_at, disconnected_at, duration_seconds, disconnection_type
-            FROM vpn_connections ORDER BY connected_at DESC
+            FROM vpn_connections{where_clause} ORDER BY connected_at DESC
         """
-        cursor.execute(query)
+        cursor.execute(query, params)
         connections = cursor.fetchall()
         conn.close()
-        
+
         output = io.StringIO()
-        output.write('Username,Certificate Name,Client IP,VPN IP,Connected At (JST),Disconnected At (JST),Duration\n')
-        for conn_data in connections:
-            # ... (CSV row generation logic omitted for brevity) ...
-            output.write('...')
+        writer = csv.writer(output)
+        writer.writerow([
+            'Username', 'Certificate Name', 'Client IP', 'VPN IP',
+            'Connected At (JST)', 'Disconnected At (JST)', 'Duration (seconds)', 'Disconnection Type'
+        ])
+        for row in connections:
+            writer.writerow([
+                row[0] or '',
+                row[1] or '',
+                row[2] or '',
+                row[3] or '',
+                convert_utc_to_jst(row[4]) if row[4] else '',
+                convert_utc_to_jst(row[5]) if row[5] else '',
+                str(row[6]) if row[6] is not None else '',
+                row[7] or '',
+            ])
 
         csv_content = output.getvalue()
         output.close()
-        
-        response = Response(csv_content, mimetype='text/csv', headers={'Content-Disposition': f'attachment; filename=vpn_connections_{datetime.now(JST).strftime("%Y%m%d_%H%M%S")}.csv'})
+
+        response = Response(
+            csv_content,
+            mimetype='text/csv',
+            headers={'Content-Disposition': f'attachment; filename=vpn_connections_{datetime.now(JST).strftime("%Y%m%d_%H%M%S")}.csv'}
+        )
         log_action(user['username'], 'export_vpn_connections', None, request.remote_addr, request.user_agent.string)
         return response
     except Exception as e:
         logger.error(f"VPN connections export error: {str(e)}")
-        flash(_('Failed to export VPN connection history: %(error)s', error=str(e)), 'error')
+        flash(_('Failed to export VPN connection history: {error}', error=str(e)), 'error')
         return redirect(url_for('admin_logs.vpn_connections'))

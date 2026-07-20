@@ -51,10 +51,17 @@ def init_db():
             vpn_ip TEXT,
             connected_at TIMESTAMP NOT NULL,
             disconnected_at TIMESTAMP,
-            duration_seconds INTEGER
+            duration_seconds INTEGER,
+            disconnection_type TEXT
         )
     ''')
-    
+
+    # Idempotent migration: add disconnection_type if it was created by an older schema
+    cursor.execute("PRAGMA table_info(vpn_connections)")
+    existing_columns = [row[1] for row in cursor.fetchall()]
+    if 'disconnection_type' not in existing_columns:
+        cursor.execute("ALTER TABLE vpn_connections ADD COLUMN disconnection_type TEXT")
+
     conn.commit()
     conn.close()
 

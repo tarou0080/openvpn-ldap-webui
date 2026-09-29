@@ -98,6 +98,18 @@ ADMIN_GROUP=net-vpn-admins
   `Remote-Groups` injected by the proxy (typically the `cn` of the AD group).
   Default: `net-vpn-admins`.
 
+```bash
+# Reverse proxy allowed to supply the identity headers
+TRUSTED_PROXIES=192.0.2.10
+```
+
+- **TRUSTED_PROXIES**: Comma-separated IP addresses or CIDRs of the reverse proxy that injects
+  `Remote-User` / `Remote-Groups`. The WebUI trusts these headers blindly, so without this setting
+  any host that can reach the WebUI port directly (another container, a VM on the same network)
+  can forge them and open the admin interface. When set, requests from any other source are
+  treated as unauthenticated (401). Default: empty (headers accepted from any source; only safe
+  if the WebUI port is reachable from the proxy alone). **Strongly recommended.**
+
 ## Certificate and CA Configuration
 
 ### CA Certificate Information

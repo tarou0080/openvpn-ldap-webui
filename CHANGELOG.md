@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-09-29
+
+### Security
+
+- **New `TRUSTED_PROXIES` setting**: the WebUI trusted `Remote-User` / `Remote-Groups` from any source, so a host that could reach the WebUI port directly could forge them and open the admin interface. When `TRUSTED_PROXIES` is set, identity headers are accepted only from the listed proxy addresses; other requests are treated as unauthenticated. Setting it is strongly recommended (see docs/CONFIGURATION.md).
+
+### Fixed
+
+- `ADMIN_GROUP` from `.env` is now passed to the WebUI container (previously compose.yml did not pass it, so the default `net-vpn-admins` was always used).
+
 ## [1.2.0] - 2026-07-20
 
 ### Added

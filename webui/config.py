@@ -57,3 +57,15 @@ ACTION_NAMES = {
 }
 # Admin group setting
 ADMIN_GROUP = os.environ.get('ADMIN_GROUP', 'net-vpn-admins')
+
+# Reverse proxies allowed to supply Remote-User / Remote-Groups (comma-separated IPs or CIDRs).
+# Empty = headers are accepted from any source (only safe if nothing but the proxy can reach the WebUI).
+import ipaddress
+TRUSTED_PROXIES = []
+for _p in os.environ.get('TRUSTED_PROXIES', '').split(','):
+    if _p.strip():
+        try:
+            TRUSTED_PROXIES.append(ipaddress.ip_network(_p.strip(), strict=False))
+        except ValueError:
+            print(f"ERROR: invalid TRUSTED_PROXIES entry: {_p.strip()}", file=sys.stderr)
+            sys.exit(1)

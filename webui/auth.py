@@ -1,15 +1,33 @@
 #!/usr/bin/env python3
 from flask import request, abort
-from config import ADMIN_DOMAIN, USER_DOMAIN, ADMIN_GROUP
+from config import ADMIN_DOMAIN, USER_DOMAIN, ADMIN_GROUP, TRUSTED_PROXIES
+import ipaddress
 import logging
 
 logger = logging.getLogger(__name__)
+
+def from_trusted_proxy():
+    """True if the request comes from a reverse proxy listed in TRUSTED_PROXIES (always True when unset)"""
+    if not TRUSTED_PROXIES:
+        return True
+    try:
+        addr = ipaddress.ip_address(request.remote_addr)
+    except ValueError:
+        return False
+    return any(addr in net for net in TRUSTED_PROXIES)
+
 
 def get_user_from_headers():
     """Get header information from Authelia
     
     Returns 401 error if Remote-User header does not exist
     """
+    # Identity headers from anything but the trusted proxy could be forged
+    if not from_trusted_proxy():
+        if request.headers.get("Remote-User"):
+            logger.warning(f"Ignoring identity headers from untrusted source {request.remote_addr}")
+        abort(401, description="Authentication required. Please access via Authelia.")
+
     username = request.headers.get('Remote-User')
     
     # Security: Remote-User header is required

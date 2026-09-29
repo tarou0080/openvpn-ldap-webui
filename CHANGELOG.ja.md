@@ -5,6 +5,16 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づき、
 バージョン管理は [Semantic Versioning](https://semver.org/spec/v2.0.0.html) に準拠します。
 
+## [1.2.1] - 2026-09-29
+
+### セキュリティ
+
+- **`TRUSTED_PROXIES` 設定を追加**: WebUIは `Remote-User` / `Remote-Groups` をどの接続元からでも信じていたため、WebUIのポートへ直接届くホストがヘッダーを偽装して管理画面を開けました。`TRUSTED_PROXIES` を設定すると、記載したプロキシからの要求でだけヘッダーを受け付け、それ以外は未ログイン扱いにします。設定を強く推奨します（docs/CONFIGURATION.ja.md）。
+
+### 修正
+
+- `.env` の `ADMIN_GROUP` がWebUIコンテナへ渡るようになりました（従来は compose.yml が渡しておらず、常に既定値 `net-vpn-admins` が使われていました）。
+
 ## [1.2.0] - 2026-07-20
 
 ### 追加

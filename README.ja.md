@@ -171,7 +171,7 @@ podman-compose restart
 WebUIにアクセスするには `Remote-User` / `Remote-Groups` ヘッダーを注入する認証リバースプロキシ（例: Authelia + nginx）が必要です。プロキシを経由しない直接アクセスは401になります。
 
 - **ユーザーポータル**: リバースプロキシ経由（内部: `http://<BIND_IP>:<WEBUI_PORT>/`）
-- **管理ポータル**: リバースプロキシ経由（内部: `http://<BIND_IP>:<WEBUI_PORT>/admin`）
+- **管理ポータル**: リバースプロキシ経由（内部: `http://<BIND_IP>:<WEBUI_PORT>/admin`）。`ADMIN_DOMAIN` で別ドメインに分離することもできます（docs/CONFIGURATION.ja.md 参照）
 
 設定例は [docs/SETUP.ja.md](docs/SETUP.ja.md) を参照してください。
 

@@ -172,7 +172,7 @@ The WebUI requires an authenticating reverse proxy (e.g., Authelia with nginx) t
 `Remote-User` and `Remote-Groups` headers. Direct access without the proxy returns 401.
 
 - **User Portal**: proxied via your reverse proxy (internally `http://<BIND_IP>:<WEBUI_PORT>/`)
-- **Admin Portal**: proxied via your reverse proxy (internally `http://<BIND_IP>:<WEBUI_PORT>/admin`)
+- **Admin Portal**: proxied via your reverse proxy (internally `http://<BIND_IP>:<WEBUI_PORT>/admin`). Can optionally be moved to its own domain with `ADMIN_DOMAIN` (see docs/CONFIGURATION.md)
 
 See [docs/SETUP.md](docs/SETUP.md) for the reverse proxy configuration.
 

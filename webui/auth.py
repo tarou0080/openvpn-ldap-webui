@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from flask import request, abort
+from flask import request, abort, url_for
 from config import ADMIN_DOMAIN, USER_DOMAIN, ADMIN_GROUP, TRUSTED_PROXIES
 import ipaddress
 import logging
@@ -43,8 +43,18 @@ def get_user_from_headers():
     }
 
 def is_admin_domain():
-    """Determine if access is from admin domain"""
-    return request.host == ADMIN_DOMAIN
+    """True if the request came to the dedicated admin domain (split-domain mode only)"""
+    return bool(ADMIN_DOMAIN) and request.host == ADMIN_DOMAIN
+
+def is_admin_area():
+    """True if the request targets the admin portal.
+
+    Split-domain mode (ADMIN_DOMAIN set): the admin domain is the admin portal.
+    Single-domain mode (ADMIN_DOMAIN empty): /admin paths are the admin portal.
+    """
+    if ADMIN_DOMAIN:
+        return is_admin_domain()
+    return request.path == '/admin' or request.path.startswith('/admin/')
 
 def is_admin_user(user):
     """Determine if user belongs to admin group"""
@@ -52,9 +62,13 @@ def is_admin_user(user):
 
 def get_domain_info():
     """Get domain information"""
+    if ADMIN_DOMAIN:
+        admin_url, user_url = f'https://{ADMIN_DOMAIN}', f'https://{USER_DOMAIN}'
+    else:
+        admin_url, user_url = url_for('admin_certs.dashboard'), url_for('user.index')
     return {
-        'is_admin': is_admin_domain(),
+        'is_admin': is_admin_area(),
         'current_host': request.host,
-        'admin_url': f'https://{ADMIN_DOMAIN}',
-        'user_url': f'https://{USER_DOMAIN}'
+        'admin_url': admin_url,
+        'user_url': user_url
     }

@@ -541,6 +541,98 @@
             .col-2, .col-3, .col-4 {
                 min-width: 0;
             }
+
+            /* Tables marked .table-stack: one card per row, labels from the header (set by the script below) */
+            .table-stack thead {
+                display: none;
+            }
+            .table-stack, .table-stack tbody, .table-stack tr, .table-stack td {
+                display: block;
+                width: 100%;
+                box-sizing: border-box;
+            }
+            .table-stack tbody tr {
+                background-color: #fff !important;
+                border: 1px solid #dee2e6;
+                border-radius: 6px;
+                margin-bottom: 12px;
+                padding: 4px 12px;
+            }
+            .table-responsive .table-stack td,
+            .table-stack td {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                gap: 12px;
+                padding: 6px 0;
+                border-bottom: 1px solid #f1f3f5;
+                text-align: right;
+                white-space: normal !important;
+                overflow-wrap: anywhere;
+                max-width: none !important;
+                overflow: visible !important;
+            }
+            .table-stack td::before {
+                content: attr(data-label);
+                flex-shrink: 0;
+                font-size: 0.85rem;
+                font-weight: 600;
+                color: #495057;
+                text-align: left;
+            }
+            .table-stack td:last-child {
+                border-bottom: none;
+            }
+            .table-stack td[colspan] {
+                justify-content: center;
+            }
+            .table-stack td[colspan]::before {
+                display: none;
+            }
+            .table-stack td.col-actions {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                padding: 10px 0 6px;
+                text-align: left;
+            }
+            .table-stack td.col-actions::before,
+            .table-stack td.col-actions.is-empty {
+                display: none;
+            }
+            .table-stack td.col-actions > * {
+                flex: 1 1 40%;
+                display: flex !important;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin: 0 !important;
+            }
+            .table-stack td.col-actions .btn {
+                flex: 1 1 40%;
+                display: flex !important;
+                align-items: center;
+                justify-content: center;
+                min-height: 44px;
+                font-size: 15px !important;
+                padding: 10px 12px !important;
+                box-sizing: border-box;
+            }
+
+            /* Confirmation dialogs: fit the screen, long serials wrap */
+            .modal-box {
+                margin: 20vh auto 0 !important;
+                width: auto !important;
+                max-width: calc(100% - 24px) !important;
+                box-sizing: border-box;
+            }
+            .modal-box td, .modal-box th {
+                white-space: normal !important;
+                overflow-wrap: anywhere;
+            }
+            .modal-box form .btn {
+                flex: 1 1 40%;
+                min-height: 44px;
+            }
         }
     </style>
 </head>
@@ -551,7 +643,7 @@
                 <div>
                     {% if domain.is_admin %}
                     <!-- 管理者ドメインのナビゲーション -->
-                    <a href="{{ url_for('user.index') }}" class="active">{{ _('Admin Home') }}</a>
+                    <a href="{{ domain.admin_url }}" class="active">{{ _('Admin Home') }}</a>
                     <a href="{{ domain.user_url }}">{{ _('User Site') }}</a>
                     {% else %}
                     <!-- 一般ドメインのナビゲーション -->
@@ -603,5 +695,21 @@
             {% block content %}{% endblock %}
         </div>
     </div>
+    <script>
+    // Copy each header's text (and the col-actions marker) to its cells for the mobile card layout
+    document.querySelectorAll('table.table-stack').forEach(function (table) {
+        var heads = Array.prototype.map.call(table.querySelectorAll('thead th'), function (th) { return th; });
+        table.querySelectorAll('tbody tr').forEach(function (tr) {
+            Array.prototype.forEach.call(tr.children, function (td, i) {
+                if (!heads[i] || td.hasAttribute('colspan')) return;
+                td.setAttribute('data-label', heads[i].textContent.trim());
+                if (heads[i].classList.contains('col-actions')) {
+                    td.classList.add('col-actions');
+                    if (!td.children.length) td.classList.add('is-empty');
+                }
+            });
+        });
+    });
+    </script>
 </body>
 </html>

@@ -53,16 +53,21 @@ VPN_NETMASK=255.255.255.0
 ## ドメイン設定
 
 ```bash
-# ドメイン設定
-ADMIN_DOMAIN=vpnadmin.example.com
-USER_DOMAIN=vpn.example.com
+# ドメイン設定（空 = 1ドメインモード）
+ADMIN_DOMAIN=
+USER_DOMAIN=
 
 # OpenVPN接続先ホスト（.ovpnファイルに記載されます）
 OPENVPN_REMOTE_HOST=vpn.example.com
 ```
 
-- **ADMIN_DOMAIN**: 管理インターフェース用ドメイン（情報提供用）
-- **USER_DOMAIN**: ユーザーインターフェース用ドメイン（情報提供用）
+WebUIは次の2つのモードのどちらかで動作します。
+
+- **1ドメイン（既定・`ADMIN_DOMAIN` が空）**: 同じホストの `/` がユーザーポータル、`/admin` が管理ポータルです。`ADMIN_GROUP` のメンバーにはヘッダーに「管理サイト」リンクが出ます。`/admin` はリバースプロキシ側でより厳しいポリシーで保護してください（docs/SETUP.ja.md の Authelia 例を参照）。
+- **ドメイン分離（`ADMIN_DOMAIN` と `USER_DOMAIN` を設定）**: 管理ポータルは `ADMIN_DOMAIN` でだけ、証明書の申請は `USER_DOMAIN` でだけ受け付けます。2つのポータルをブラウザ上で別オリジンにしたい場合や、プロキシの規則を分けたい場合に選びます。WebUIはリクエストの `Host` ヘッダーを `ADMIN_DOMAIN` と比べるので、プロキシは元のホスト名を渡す必要があります。
+
+- **ADMIN_DOMAIN**: 管理ポータルのドメイン。空なら1ドメインモード
+- **USER_DOMAIN**: ユーザーポータルのドメイン。`ADMIN_DOMAIN` を設定するときは必須（未設定だとWebUIが起動を拒否します）
 - **OPENVPN_REMOTE_HOST**: クライアントが接続するホスト名またはIP。この値は.ovpn設定ファイルに記載されます。
 
 ## セキュリティ設定

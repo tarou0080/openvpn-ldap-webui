@@ -325,5 +325,6 @@
   "msg_reapproval_already_pending": "A reapproval request is already pending.",
   "msg_reapproval_request_from_user_site": "Please request reapproval from the user site.",
   "msg_reapproval_request_sent": "Reapproval request for certificate {cert_serial} has been submitted.",
-  "within hours": "Download within {hours} hours"
+  "within hours": "Download within {hours} hours",
+  "msg_device_name_invalid": "Device name may contain only letters, digits, hyphens and underscores (up to 50 characters)."
 }

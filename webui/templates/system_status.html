@@ -117,7 +117,7 @@
     <h2>{{ _('Scheduler History') }}</h2>
     <div style="border: 1px solid #dee2e6; border-radius: 4px; padding: 1rem; background-color: white;">
         <div class="table-responsive">
-        <table style="font-size: 14px;">
+        <table class="table-stack" style="font-size: 14px;">
             <thead>
                 <tr>
                     <th>{{ _('Type') }}</th>
@@ -170,7 +170,7 @@
     {% if recent_activities and not recent_activities[0].get('error') %}
     <div style="border: 1px solid #dee2e6; border-radius: 4px; overflow: hidden; background-color: white;">
         <div class="table-responsive">
-        <table>
+        <table class="table-stack">
             <thead>
                 <tr>
                     <th>{{ _('User') }}</th>

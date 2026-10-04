@@ -16,8 +16,13 @@ CERT_PATH = os.environ.get('CERT_PATH', '/app/data/certs')
 OPENVPN_CONFIG = os.environ.get('OPENVPN_CONFIG', '/app/openvpn-config')
 
 # Domain settings
-ADMIN_DOMAIN = os.environ.get('ADMIN_DOMAIN', 'vpn-admin.example.com')
-USER_DOMAIN = os.environ.get('USER_DOMAIN', 'vpn.example.com')
+# Empty ADMIN_DOMAIN = single-domain mode (admin portal under /admin on the same host).
+# Set ADMIN_DOMAIN (and USER_DOMAIN) to serve the admin portal on its own domain.
+ADMIN_DOMAIN = os.environ.get('ADMIN_DOMAIN', '').strip()
+USER_DOMAIN = os.environ.get('USER_DOMAIN', '').strip()
+if ADMIN_DOMAIN and not USER_DOMAIN:
+    print("ERROR: USER_DOMAIN must be set when ADMIN_DOMAIN is set (split-domain mode)", file=sys.stderr)
+    sys.exit(1)
 
 # Certificate validity (days)
 CERT_EXPIRE_DAYS = int(os.environ.get('CERT_EXPIRE_DAYS', '825'))

@@ -240,7 +240,7 @@ location /authelia {
     proxy_set_header X-Original-URL $scheme://$http_host$request_uri;
 }
 
-# WebUIロケーション（ユーザーポータルの例）
+# WebUIロケーション（1ドメインモードでは両ポータルを配信）
 location / {
     auth_request /authelia;
     # Autheliaからユーザー情報ヘッダーを注入
@@ -255,8 +255,32 @@ location / {
 ```
 
 `<BIND_IP>` と `<WEBUI_PORT>` は `.env` の値に置き換えてください。
-管理ポータルはより厳格なAutheliaポリシー（例: two_factor）で保護し、
-管理グループのみアクセス可能にすることを推奨します。
+
+### Autheliaのアクセス規則（1ドメインモード）
+
+`/admin` は二要素認証を必須にして管理グループに限り、それ以外はVPN利用者向けにします。
+規則は上から順に評価されるので、各 `deny` は閉じたい規則の直後に置いてください。
+置かないと、グループ外の利用者が後ろのゆるい規則に拾われます。
+
+```yaml
+access_control:
+  rules:
+    - domain: 'vpn.example.com'
+      resources: ['^/admin([/?].*)?$']
+      policy: 'two_factor'
+      subject: 'group:vpn-admins'
+    - domain: 'vpn.example.com'
+      resources: ['^/admin([/?].*)?$']
+      policy: 'deny'
+    - domain: 'vpn.example.com'
+      policy: 'one_factor'
+      subject: ['group:vpn-users', 'group:vpn-admins']
+    - domain: 'vpn.example.com'
+      policy: 'deny'
+```
+
+WebUIも管理ページごとに `ADMIN_GROUP` の所属を確認するので、`/admin` はプロキシの規則と
+アプリの確認の両方で守られます。ドメイン分離モードでは、同じ規則をパスではなくドメイン単位で書きます。
 
 ## 注意事項
 

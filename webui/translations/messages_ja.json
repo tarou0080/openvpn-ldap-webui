@@ -325,5 +325,6 @@
   "msg_reapproval_already_pending": "再承認申請は既に申請中です。",
   "msg_reapproval_request_from_user_site": "ユーザーサイトから再承認申請してください。",
   "msg_reapproval_request_sent": "証明書({cert_serial})の再承認申請を送信しました。",
-  "within hours": "{hours}時間以内にダウンロード"
+  "within hours": "{hours}時間以内にダウンロード",
+  "msg_device_name_invalid": "デバイス名は英数字・ハイフン・アンダースコアのみ、50文字以内で入力してください。"
 }

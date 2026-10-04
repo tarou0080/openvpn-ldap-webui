@@ -53,16 +53,21 @@ This configuration creates a 10.8.0.0/24 network for VPN clients.
 ## Domain Configuration
 
 ```bash
-# Domain settings
-ADMIN_DOMAIN=vpnadmin.example.com
-USER_DOMAIN=vpn.example.com
+# Domain settings (empty = single-domain mode)
+ADMIN_DOMAIN=
+USER_DOMAIN=
 
 # OpenVPN connection host (written to .ovpn files)
 OPENVPN_REMOTE_HOST=vpn.example.com
 ```
 
-- **ADMIN_DOMAIN**: Domain for admin interface (informational)
-- **USER_DOMAIN**: Domain for user interface (informational)
+The WebUI runs in one of two modes:
+
+- **Single domain (default, `ADMIN_DOMAIN` empty)**: the user portal is at `/` and the admin portal at `/admin` on the same host. Members of `ADMIN_GROUP` see an "Admin Site" link in the header. Protect `/admin` with a stricter policy in your reverse proxy (see the Authelia example in docs/SETUP.md).
+- **Split domains (`ADMIN_DOMAIN` and `USER_DOMAIN` set)**: the admin portal is served only on `ADMIN_DOMAIN`, and certificate requests only on `USER_DOMAIN`. Choose this if you want the two portals in separate browser origins or behind different proxy rules. The WebUI compares the request `Host` header with `ADMIN_DOMAIN`, so the proxy must pass the original host.
+
+- **ADMIN_DOMAIN**: Admin portal domain. Empty = single-domain mode
+- **USER_DOMAIN**: User portal domain. Required when `ADMIN_DOMAIN` is set (the WebUI refuses to start otherwise)
 - **OPENVPN_REMOTE_HOST**: Hostname or IP that clients will connect to. This value is written to the .ovpn configuration files.
 
 ## Security Configuration

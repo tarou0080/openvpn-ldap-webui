@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import re
 import sqlite3
 import logging
 from flask import Blueprint, request, redirect, url_for, flash, send_file
@@ -13,6 +14,8 @@ from translations import _
 logger = logging.getLogger(__name__)
 
 user_bp = Blueprint('user', __name__)
+
+DEVICE_NAME_RE = re.compile(r'[A-Za-z0-9_-]{1,50}')
 
 def render_with_context(template_name, **kwargs):
     """Render template with common context variables"""
@@ -91,6 +94,11 @@ def request_cert():
         
         if not device_name:
             flash(_('msg_device_name_required'), 'error')
+            return redirect(url_for('user.request_cert'))
+        
+        # Same rule as the form's pattern; the browser check alone can be bypassed
+        if not DEVICE_NAME_RE.fullmatch(device_name):
+            flash(_('msg_device_name_invalid'), 'error')
             return redirect(url_for('user.request_cert'))
         
         # Save certificate request to DB

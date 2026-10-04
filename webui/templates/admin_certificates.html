@@ -18,7 +18,7 @@
     
     {% if certificates %}
     <div class="table-responsive">
-    <table>
+    <table class="table-stack">
         <thead>
             <tr>
                 <th>{{ _('ID') }}</th>
@@ -30,7 +30,7 @@
                 <th>{{ _('Certificate Expiry') }}</th>
                 <th>{{ _('First Download') }}</th>
                 <th>{{ _('Download Expiry') }}</th>
-                <th>{{ _('Actions') }}</th>
+                <th class="col-actions">{{ _('Actions') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -67,14 +67,14 @@
                         <button type="button"
                                 class="btn btn-success"
                                 style="font-size: 12px; padding: 4px 8px;"
-                                onclick="confirmReapprove('{{ cert[0] }}', '{{ cert[1] }}', '{{ cert[2] }}', '{{ cert[3] }}')">
+                                onclick='confirmReapprove({{ cert[0]|tojson }}, {{ cert[1]|tojson }}, {{ cert[2]|tojson }}, {{ cert[3]|tojson }})'>
                             {{ _('Reapprove') }}
                         </button>
                         {% endif %}
                         <button type="button"
                                 class="btn btn-danger"
                                 style="font-size: 12px; padding: 4px 8px;"
-                                onclick="confirmRevoke('{{ cert[0] }}', '{{ cert[1] }}', '{{ cert[2] }}', '{{ cert[3] }}')">
+                                onclick='confirmRevoke({{ cert[0]|tojson }}, {{ cert[1]|tojson }}, {{ cert[2]|tojson }}, {{ cert[3]|tojson }})'>
                             {{ _('Revoke') }}
                         </button>
                     </div>
@@ -109,7 +109,7 @@
 
 <!-- Certificate Reapprove Confirmation Modal -->
 <div id="reapproveModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-    <div style="background-color: white; margin: 15% auto; padding: 20px; border-radius: 8px; width: 500px; max-width: 90%;">
+    <div class="modal-box" style="background-color: white; margin: 15% auto; padding: 20px; border-radius: 8px; width: 500px; max-width: 90%;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #dee2e6; padding-bottom: 10px;">
             <h3 style="margin: 0;">{{ _('Reapprove Confirmation') }}</h3>
             <button onclick="closeReapproveModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #6c757d;">&times;</button>
@@ -152,7 +152,7 @@
 
 <!-- Certificate Revoke Confirmation Modal -->
 <div id="revokeModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-    <div style="background-color: white; margin: 15% auto; padding: 20px; border-radius: 8px; width: 500px; max-width: 90%;">
+    <div class="modal-box" style="background-color: white; margin: 15% auto; padding: 20px; border-radius: 8px; width: 500px; max-width: 90%;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #dee2e6; padding-bottom: 10px;">
             <h3 style="margin: 0;">{{ _('Revoke Confirmation') }}</h3>
             <button onclick="closeRevokeModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #6c757d;">&times;</button>

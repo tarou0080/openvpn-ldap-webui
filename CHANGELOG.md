@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-10-04
+
+### Changed
+
+- **Single-domain mode is now the default**: with `ADMIN_DOMAIN` empty, the user portal is at `/` and the admin portal at `/admin` on the same host, and admins can also request their own certificates there. Previously an empty `ADMIN_DOMAIN` left the admin portal unreachable. Setting `ADMIN_DOMAIN` and `USER_DOMAIN` keeps the previous split-domain behaviour unchanged. In split-domain mode `USER_DOMAIN` is now required; the WebUI refuses to start without it. See docs/CONFIGURATION.md and the Authelia path-rule example in docs/SETUP.md.
+- **Mobile layout**: on narrow screens every table is shown as one card per row with field labels, and action buttons (download, approve, revoke, …) are full-width at the bottom of each card instead of at the far right of a horizontally scrolling table. Confirmation dialogs fit the screen. The desktop layout is unchanged.
+
+### Security
+
+- **Device names are now validated on the server** (letters, digits, `-`, `_`, up to 50 characters — the rule the form already showed). Only the browser checked it before, so a crafted request could store a device name that broke out of the revoke/reapprove button handlers on the admin certificate list and ran script in the admin's browser. Those handlers now also pass values as JSON instead of quoted strings.
+
 ## [1.2.2] - 2026-10-04
 
 ### Security

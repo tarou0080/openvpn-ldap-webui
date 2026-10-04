@@ -250,7 +250,7 @@ location /authelia {
     proxy_set_header X-Original-URL $scheme://$http_host$request_uri;
 }
 
-# WebUI location (example for user portal)
+# WebUI location (serves both portals in single-domain mode)
 location / {
     auth_request /authelia;
     # Inject user identity headers from Authelia
@@ -265,8 +265,33 @@ location / {
 ```
 
 Replace `<BIND_IP>` and `<WEBUI_PORT>` with the values from your `.env`.
-The admin portal should be protected with stricter Authelia policy (e.g., two_factor)
-and access limited to the admin group.
+
+### Authelia access rules (single-domain mode)
+
+Require two-factor authentication for `/admin` and limit it to the admin group; the rest of the
+site is for VPN users. Rules are evaluated top to bottom, so keep each `deny` right after the
+rules it closes — otherwise users outside the groups fall through to a later, looser rule.
+
+```yaml
+access_control:
+  rules:
+    - domain: 'vpn.example.com'
+      resources: ['^/admin([/?].*)?$']
+      policy: 'two_factor'
+      subject: 'group:vpn-admins'
+    - domain: 'vpn.example.com'
+      resources: ['^/admin([/?].*)?$']
+      policy: 'deny'
+    - domain: 'vpn.example.com'
+      policy: 'one_factor'
+      subject: ['group:vpn-users', 'group:vpn-admins']
+    - domain: 'vpn.example.com'
+      policy: 'deny'
+```
+
+The WebUI checks `ADMIN_GROUP` membership on every admin page as well, so the proxy rule and
+the application check protect `/admin` independently. In split-domain mode, write the same
+rules per domain instead of per path.
 
 ## Notes
 

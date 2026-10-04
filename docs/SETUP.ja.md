@@ -274,10 +274,12 @@ access_control:
       policy: 'deny'
     - domain: 'vpn.example.com'
       policy: 'one_factor'
-      subject: ['group:vpn-users', 'group:vpn-admins']
+      subject: 'group:vpn-users'
     - domain: 'vpn.example.com'
       policy: 'deny'
 ```
+
+自分の証明書も申請する管理者は、VPN利用者グループ（OpenVPNの接続に必要なグループと同じ）にも入れてください。
 
 WebUIも管理ページごとに `ADMIN_GROUP` の所属を確認するので、`/admin` はプロキシの規則と
 アプリの確認の両方で守られます。ドメイン分離モードでは、同じ規則をパスではなくドメイン単位で書きます。

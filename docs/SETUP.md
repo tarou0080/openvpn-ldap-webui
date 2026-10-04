@@ -284,10 +284,13 @@ access_control:
       policy: 'deny'
     - domain: 'vpn.example.com'
       policy: 'one_factor'
-      subject: ['group:vpn-users', 'group:vpn-admins']
+      subject: 'group:vpn-users'
     - domain: 'vpn.example.com'
       policy: 'deny'
 ```
+
+Admins who should also request their own certificates need to be in the VPN user group
+(the same group OpenVPN requires for connecting).
 
 The WebUI checks `ADMIN_GROUP` membership on every admin page as well, so the proxy rule and
 the application check protect `/admin` independently. In split-domain mode, write the same

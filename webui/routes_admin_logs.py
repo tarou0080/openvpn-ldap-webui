@@ -54,7 +54,7 @@ def revoked_certificates():
             params.append(date_to)
         
         if username_filter:
-            where_conditions.append("username LIKE ? ESCAPE '\'")
+            where_conditions.append("username LIKE ? ESCAPE '\\'")
             params.append(f"%{escape_like(username_filter)}%")
         
         where_clause = " WHERE " + " AND ".join(where_conditions)
@@ -141,7 +141,7 @@ def audit_logs():
             params.append(action_filter)
         
         if username_filter:
-            where_conditions.append("username LIKE ? ESCAPE '\'")
+            where_conditions.append("username LIKE ? ESCAPE '\\'")
             params.append(f"%{escape_like(username_filter)}%")
         
         where_clause = " WHERE " + " AND ".join(where_conditions) if where_conditions else ""

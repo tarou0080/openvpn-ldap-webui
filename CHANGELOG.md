@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2026-10-04
+
+### Security
+
+- **Updated WebUI dependencies with known vulnerabilities**: gunicorn 21.2.0 → 26.2.0 (HTTP request smuggling), Werkzeug 3.0.1 → 3.1.9, Jinja2 3.1.2 → 3.1.6 (sandbox breakout, attribute injection), Flask 3.0.0 → 3.1.3. `requests` is now pinned (2.34.2). Rebuild the WebUI image to apply (`podman compose build vpn-webui`).
+- **Removed the unused `cryptography` dependency**: the WebUI never imported it (certificate operations run in the OpenVPN container through EasyRSA), and the pinned 41.0.7 carried several known vulnerabilities.
+
+### Fixed
+
+- **Username filters on the revoked-certificates and audit-log pages failed with an SQL error** (`ESCAPE expression must be a single character`) since 1.2.0, so filtering by username always fell back to an error. The LIKE escape character is now passed correctly.
+
 ## [1.2.1] - 2026-09-29
 
 ### Security

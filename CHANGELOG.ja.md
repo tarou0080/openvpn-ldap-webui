@@ -5,6 +5,17 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づき、
 バージョン管理は [Semantic Versioning](https://semver.org/spec/v2.0.0.html) に準拠します。
 
+## [1.2.2] - 2026-10-04
+
+### セキュリティ
+
+- **既知の脆弱性がある WebUI の依存を更新**: gunicorn 21.2.0 → 26.2.0（HTTP リクエストスマグリング）、Werkzeug 3.0.1 → 3.1.9、Jinja2 3.1.2 → 3.1.6（サンドボックス脱出・属性注入）、Flask 3.0.0 → 3.1.3。`requests` を版固定（2.34.2）しました。反映には WebUI のイメージを作り直してください（`podman compose build vpn-webui`）。
+- **使っていない `cryptography` を依存から外しました**: WebUI はこれを import しておらず（証明書の操作は OpenVPN コンテナの EasyRSA が行う）、固定していた 41.0.7 には既知の脆弱性が複数ありました。
+
+### 修正
+
+- **失効証明書と監査ログの画面で、ユーザー名の絞り込みが SQL エラーで失敗していました**（`ESCAPE expression must be a single character`。1.2.0 から）。LIKE のエスケープ文字を正しく渡すようにしました。
+
 ## [1.2.1] - 2026-09-29
 
 ### セキュリティ

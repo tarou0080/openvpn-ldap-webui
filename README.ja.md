@@ -125,6 +125,7 @@ vi .env  # 環境に合わせて編集
 - `OPENVPN_PORT`: 外部公開ポート
 - `OPENVPN_REMOTE_HOST`: クライアント設定に記載される接続先ホスト名
 - `HOME_NETWORK` / `HOME_NETMASK`: ネットワーク設定
+- `FULL_TUNNEL`: `true` でクライアントの全通信をVPN経由にし、インターネットの出口をこのサーバーにする（`block-ipv6` も送る）。既定 `false` は `HOME_NETWORK` 宛てだけ。ホスト側でVPNの通信を上流へ転送・マスカレードできる必要がある
 - `CERT_API_SECRET`: 証明書API秘密鍵
 - **LDAP設定**: `LDAP_SERVER`, `LDAP_BASE_DN`, `LDAP_BIND_USER`, `LDAP_BIND_PASSWORD`, `LDAP_VPN_GROUP`
 

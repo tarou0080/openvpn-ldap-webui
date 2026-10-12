@@ -125,6 +125,7 @@ Key settings:
 - `OPENVPN_PORT`: External port
 - `OPENVPN_REMOTE_HOST`: Connection hostname for client config
 - `HOME_NETWORK` / `HOME_NETMASK`: Your network settings
+- `FULL_TUNNEL`: `true` routes all client traffic through the VPN so the internet exit is your server (also pushes `block-ipv6`). Default `false` routes only `HOME_NETWORK`. The host must forward and masquerade VPN traffic to its uplink
 - `CERT_API_SECRET`: Certificate API secret key
 - **LDAP settings**: `LDAP_SERVER`, `LDAP_BASE_DN`, `LDAP_BIND_USER`, `LDAP_BIND_PASSWORD`, `LDAP_VPN_GROUP`
 

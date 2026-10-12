@@ -65,6 +65,16 @@ push "dhcp-option NBT 1"
 EOF
 fi
 
+if [ "${FULL_TUNNEL}" = "true" ]; then
+    cat >> "$CONFIG_FILE" << EOF
+
+# Full tunnel: send all client traffic through the VPN (exit = this server's default route)
+push "redirect-gateway def1 bypass-dhcp"
+# This server tunnels IPv4 only; stop clients from leaking IPv6 around the tunnel
+push "block-ipv6"
+EOF
+fi
+
 cat >> "$CONFIG_FILE" << EOF
 # End of auto-generated settings
 EOF

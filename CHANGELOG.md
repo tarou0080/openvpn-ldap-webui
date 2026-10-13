@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-10-14
+
+### Security
+
+- **The OpenVPN container no longer installs `requests` / `urllib3`.** They were used only by the compose healthcheck, which now uses the Python standard library. The image runs Python 3.9, and the fixed urllib3 releases (2.7.0+, several High advisories) need Python 3.10+, so rebuilding could not pick them up. `flask` and `ldap3` are now pinned. Rebuild the image to apply (`podman compose build openvpn-server`).
+
 ## [2.0.0] - 2026-10-14
 
 ### Security

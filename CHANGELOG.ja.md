@@ -5,6 +5,12 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づき、
 バージョン管理は [Semantic Versioning](https://semver.org/spec/v2.0.0.html) に準拠します。
 
+## [2.0.1] - 2026-10-14
+
+### セキュリティ
+
+- **OpenVPN コンテナに `requests`／`urllib3` を入れないようにした。** 使い道は compose の healthcheck だけで、Python の標準ライブラリに置き換えた。イメージの Python は 3.9 で、修正版の urllib3（2.7.0 以降・High の勧告が複数）は Python 3.10 以上が必要なため、作り直しても上がらなかった。`flask` と `ldap3` は版を固定した。反映にはイメージの作り直しが要る（`podman compose build openvpn-server`）。
+
 ## [2.0.0] - 2026-10-14
 
 ### セキュリティ

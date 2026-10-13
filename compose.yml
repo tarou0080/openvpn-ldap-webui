@@ -108,7 +108,7 @@ services:
       - LDAP_VPN_GROUP=${LDAP_VPN_GROUP}
       - LDAP_TLS_CA_FILE=${LDAP_TLS_CA_FILE:-}
     healthcheck:
-      test: ["CMD", "sh", "-c", "python3 -c \"import requests; requests.get('http://${CERT_API_BIND_IP}:${CERT_API_INTERNAL_PORT}/health', timeout=5)\""]
+      test: ["CMD", "sh", "-c", "python3 -c \"import urllib.request; urllib.request.urlopen('http://${CERT_API_BIND_IP}:${CERT_API_INTERNAL_PORT}/health', timeout=5)\""]
       interval: 30s
       timeout: 10s
       retries: 3

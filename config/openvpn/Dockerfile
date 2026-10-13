@@ -16,7 +16,9 @@ RUN dnf update -y && \
     && dnf clean all
 
 # Install Python packages for Certificate API and LDAP auth
-RUN pip3 install --no-cache-dir flask requests ldap3
+# Pinned; the collector checks these against known vulnerabilities. No requests/urllib3:
+# the healthcheck uses the standard library (newer urllib3 needs Python >= 3.10, this image has 3.9)
+RUN pip3 install --no-cache-dir flask==3.1.3 ldap3==2.9.1
 
 # Create directories
 RUN mkdir -p /etc/openvpn/{server,ccd,logs} && \

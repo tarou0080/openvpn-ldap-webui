@@ -404,7 +404,7 @@ A: No, this system is designed with LDAP authentication as a requirement. Using 
 
 **Q: Can I authenticate with certificate only?**
 
-A: By default, two-factor authentication (certificate + LDAP) is used. To use certificate-only, you would need to remove `auth-user-pass` from the OpenVPN configuration, but this is not recommended for security reasons.
+A: No. The server always requires both the certificate and the LDAP password (enforced since 2.0.0); `start-openvpn.sh` writes the LDAP check into `server.conf` on every start.
 
 **Q: What's the performance impact of LDAP authentication?**
 

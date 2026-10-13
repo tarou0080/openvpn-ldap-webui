@@ -68,7 +68,6 @@ server ${VPN_NETWORK} ${VPN_NETMASK}
 ifconfig-pool-persist ipp.txt
 
 keepalive 10 120
-comp-lzo
 user openvpn
 group openvpn
 persist-key
@@ -80,6 +79,9 @@ verb 3
 
 # Client configuration directory
 client-config-dir /etc/openvpn/ccd
+
+# Cipher, LDAP authentication and CRL settings are (re)written by
+# start-openvpn.sh on every start, so they cannot go missing.
 EOF
 
 echo "Setting permissions..."

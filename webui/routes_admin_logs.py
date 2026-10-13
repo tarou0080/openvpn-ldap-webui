@@ -183,6 +183,10 @@ def audit_logs():
         flash(_('Failed to retrieve audit logs: {error}', error=str(e)), 'error')
         return redirect(url_for('admin_logs.audit_logs'))
 
+def _csv_safe(row):
+    """Neutralise cells a spreadsheet would run as a formula (User-Agent etc. are client-controlled)"""
+    return ["'" + v if isinstance(v, str) and v[:1] in ('=', '+', '-', '@', '\t', '\r') else v for v in row]
+
 @admin_logs_bp.route('/audit-logs/export')
 def audit_logs_export():
     """Export audit logs to CSV"""
@@ -203,15 +207,14 @@ def audit_logs_export():
         conn.close()
         
         output = io.StringIO()
-        output.write('ID,Username,Action,Target Certificate ID,IP Address,User Agent,Timestamp (JST)\n')
+        writer = csv.writer(output)
+        writer.writerow(['ID', 'Username', 'Action', 'Target Certificate ID', 'IP Address', 'User Agent', 'Timestamp (JST)'])
         for log in audit_logs:
-            jst_timestamp = convert_utc_to_jst(log[6])
-            row = [
+            writer.writerow(_csv_safe([
                 str(log[0]), log[1], ACTION_NAMES.get(log[2], log[2]),
                 str(log[3]) if log[3] else '', log[4] or '',
-                (log[5] or '').replace(',', ';'), jst_timestamp
-            ]
-            output.write(','.join(f'"{field}"' for field in row) + '\n')
+                log[5] or '', convert_utc_to_jst(log[6])
+            ]))
         
         csv_content = output.getvalue()
         output.close()
@@ -399,7 +402,7 @@ def vpn_connections_export():
             'Connected At (JST)', 'Disconnected At (JST)', 'Duration (seconds)', 'Disconnection Type'
         ])
         for row in connections:
-            writer.writerow([
+            writer.writerow(_csv_safe([
                 row[0] or '',
                 row[1] or '',
                 row[2] or '',
@@ -408,7 +411,7 @@ def vpn_connections_export():
                 convert_utc_to_jst(row[5]) if row[5] else '',
                 str(row[6]) if row[6] is not None else '',
                 row[7] or '',
-            ])
+            ]))
 
         csv_content = output.getvalue()
         output.close()

@@ -145,6 +145,9 @@ LDAP_VPN_GROUP=CN=VPN-Users,CN=Users,DC=example,DC=com
 - **LDAP_BIND_PASSWORD**: バインドユーザーのパスワード
 - **LDAP_USER_FILTER**: ユーザー検索に使用するLDAPフィルター
 - **LDAP_VPN_GROUP**: VPNアクセスを許可するグループのDN
+- **LDAP_TLS_CA_FILE**（任意）: StartTLSでLDAPサーバーを検証するCA証明書（PEM）。空なら暗号化はするが相手の検証はしない。指定時は `LDAP_SERVER` をサーバー証明書のホスト名にする
+
+VPN接続には証明書とLDAPパスワードの両方が必要です。`start-openvpn.sh` が起動のたびにLDAP検証・CRL確認・暗号設定を `server.conf` へ書き直すため、ファイルを作り直したり手で編集したりしても失われません。`LDAP_SERVER` が空のときはすべてのログインが拒否されます。
 
 詳細な設定手順については、[LDAP設定ガイド](LDAP_SETUP.ja.md)を参照してください。
 
@@ -178,12 +181,12 @@ EASYRSA_CLIENT_OU=VPN-Client
 # 証明書有効期限（日数）
 EASYRSA_CA_EXPIRE=3650        # CA証明書: 10年
 EASYRSA_CERT_EXPIRE=825       # クライアント証明書: 約2年
-EASYRSA_CRL_DAYS=180          # 証明書失効リスト: 6ヶ月
+EASYRSA_CRL_DAYS=3650         # 証明書失効リスト: 10年
 ```
 
 - **EASYRSA_CA_EXPIRE**: CA証明書の有効期間（デフォルト: 10年）
 - **EASYRSA_CERT_EXPIRE**: クライアント証明書の有効期間（デフォルト: 825日 ≈ 2年3ヶ月）
-- **EASYRSA_CRL_DAYS**: CRLが再生成が必要になるまでの有効期間
+- **EASYRSA_CRL_DAYS**: CRLの有効期間。CRLはOpenVPNの起動のたびと失効操作のたびに再生成される。期限が切れると全クライアントが `VERIFY ERROR: CRL has expired` で拒否される
 
 **注意**: Apple iOSは証明書の有効期間が825日以下である必要があります。
 

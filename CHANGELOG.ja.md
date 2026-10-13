@@ -5,6 +5,29 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づき、
 バージョン管理は [Semantic Versioning](https://semver.org/spec/v2.0.0.html) に準拠します。
 
+## [2.0.0] - 2026-10-14
+
+### セキュリティ
+
+- **新規導入の環境でLDAPパスワードとCRLが確認されていなかった**。`init-openvpn.sh` が作る `server.conf` に `auth-user-pass-verify` と `crl-verify` が無く（1.0.0から）、証明書だけで接続でき（クライアントが聞くパスワードは確認されない）、WebUIで失効させた証明書も接続できた。`start-openvpn.sh` が起動のたびにLDAP検証・CRL確認・暗号設定を `server.conf` へ書き込み（手書きの同じ行は置き換える）、CRLを再生成して必ず存在するようにした。
+- **圧縮（`comp-lzo`）をサーバー設定から削除**（VORACLE）。
+- **LDAP検索フィルター**: VPNクライアントが送るユーザー名をエスケープしてから `LDAP_USER_FILTER` へ入れる。`*` や `)` で検索条件を変えられなくなった。
+- **CSV出力**（監査ログ・VPN接続履歴）: 全フィールドを正しくクォートし、`=`・`+`・`-`・`@` で始まるセルを無害化。細工した User-Agent で列を崩したり表計算の数式として実行させたりできなくなった。
+- `TRUSTED_PROXIES` が空のとき（認証ヘッダーをどこからでも受け付ける）WebUI が起動時に警告を出す。
+
+### 追加
+
+- **`LDAP_TLS_CA_FILE`**（任意）: StartTLSでLDAPサーバーの証明書を検証する。空なら従来どおり。
+- **`FULL_TUNNEL`**（任意・既定 `false`）: クライアントの全通信をVPN経由にする（`redirect-gateway def1 bypass-dhcp` と `block-ipv6`）。
+
+### 変更
+
+- compose の `EASYRSA_CRL_DAYS` 既定を 3650 に（従来180＝半年でCRLが切れ全クライアントが接続不能になった）。
+
+### アップグレード
+
+`init-openvpn.sh` で作り、手で直していない環境では非互換: `openvpn-server` を再起動すると、すべての接続に `LDAP_VPN_GROUP` のメンバーの正しいLDAPパスワードが必要になり、失効した証明書は拒否される。`LDAP_SERVER` が空だとすべてのログインが拒否される。再起動の前に `.env` のLDAP設定を確認すること。圧縮を有効にしていたクライアントはプロファイルから `comp-lzo` を削除する（本プロジェクトが生成したプロファイルには元々無い）。
+
 ## [1.3.0] - 2026-10-04
 
 ### 変更

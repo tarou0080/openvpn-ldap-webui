@@ -145,12 +145,12 @@ EASYRSA_CLIENT_OU=VPN-Client
 # Certificate expiration (in days)
 EASYRSA_CA_EXPIRE=3650        # CA certificate: 10 years
 EASYRSA_CERT_EXPIRE=825       # Client certificates: ~2 years
-EASYRSA_CRL_DAYS=180          # Certificate Revocation List: 6 months
+EASYRSA_CRL_DAYS=3650         # Certificate Revocation List: 10 years
 ```
 
 - **EASYRSA_CA_EXPIRE**: CA certificate validity period (default: 10 years)
 - **EASYRSA_CERT_EXPIRE**: Client certificate validity period (default: 825 days ≈ 2 years 3 months)
-- **EASYRSA_CRL_DAYS**: How long the CRL is valid before needing regeneration
+- **EASYRSA_CRL_DAYS**: How long the CRL is valid. The CRL is regenerated on every OpenVPN start and on every revocation; if it expires, every client is refused with `VERIFY ERROR: CRL has expired`
 
 **Note**: Apple iOS requires certificates to be valid for 825 days or less.
 
@@ -307,6 +307,9 @@ LDAP_VPN_GROUP=CN=VPN-Users,CN=Users,DC=example,DC=com
 - **LDAP_BIND_PASSWORD**: Password for the bind user
 - **LDAP_USER_FILTER**: LDAP filter used for user searches
 - **LDAP_VPN_GROUP**: DN of the group that grants VPN access
+- **LDAP_TLS_CA_FILE** (optional): CA certificate (PEM) used to verify the LDAP server during StartTLS. Empty keeps the connection encrypted but unverified. When set, `LDAP_SERVER` must be the host name in the server certificate
+
+Every VPN connection needs both the certificate and the LDAP password. `start-openvpn.sh` rewrites the LDAP check, the CRL check and the cipher settings into `server.conf` on every start, so they cannot be lost by regenerating or hand-editing the file. If `LDAP_SERVER` is empty, every login is rejected.
 
 For detailed configuration instructions, see the [LDAP Setup Guide](LDAP_SETUP.md).
 

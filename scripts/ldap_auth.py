@@ -4,6 +4,7 @@ import sys
 import os
 import logging
 from ldap3 import Server, Connection, Tls
+from ldap3.utils.conv import escape_filter_chars
 import ssl
 
 # Logging setup
@@ -18,12 +19,19 @@ LDAP_BIND_USER = os.environ.get('LDAP_BIND_USER', 'CN=BindUser,CN=Users,DC=examp
 LDAP_BIND_PASSWORD = os.environ.get('LDAP_BIND_PASSWORD', '')
 LDAP_USER_FILTER = os.environ.get('LDAP_USER_FILTER', '(&(objectClass=user)(|(sAMAccountName={username})(userPrincipalName={username})))')
 LDAP_VPN_GROUP = os.environ.get('LDAP_VPN_GROUP', 'CN=VPN-Users,CN=Users,DC=example,DC=com')
+# CA certificate (PEM) of the LDAP server. Set it to verify the server during StartTLS;
+# empty keeps the previous behaviour (encrypted but unverified).
+LDAP_TLS_CA_FILE = os.environ.get('LDAP_TLS_CA_FILE', '').strip()
 
 def authenticate_user(username, password):
     """Perform LDAP authentication"""
     try:
-        # TLS settings (skip certificate validation)
-        tls_configuration = Tls(validate=ssl.CERT_NONE, version=ssl.PROTOCOL_TLSv1_2)
+        if LDAP_TLS_CA_FILE:
+            tls_configuration = Tls(validate=ssl.CERT_REQUIRED, version=ssl.PROTOCOL_TLSv1_2,
+                                    ca_certs_file=LDAP_TLS_CA_FILE)
+        else:
+            # Encrypted but the server certificate is not verified
+            tls_configuration = Tls(validate=ssl.CERT_NONE, version=ssl.PROTOCOL_TLSv1_2)
         
         # Connect to LDAP server
         server = Server(LDAP_SERVER, port=LDAP_PORT, use_ssl=False, tls=tls_configuration)
@@ -38,7 +46,8 @@ def authenticate_user(username, password):
             return False, "LDAP admin bind failed"
         
         # Search for user
-        search_filter = LDAP_USER_FILTER.format(username=username)
+        # The username comes from the VPN client; escape it so it cannot change the filter
+        search_filter = LDAP_USER_FILTER.format(username=escape_filter_chars(username))
         admin_conn.search(LDAP_BASE_DN, search_filter, attributes=['distinguishedName', 'memberOf'])
         
         if not admin_conn.entries:

@@ -74,3 +74,6 @@ for _p in os.environ.get('TRUSTED_PROXIES', '').split(','):
         except ValueError:
             print(f"ERROR: invalid TRUSTED_PROXIES entry: {_p.strip()}", file=sys.stderr)
             sys.exit(1)
+if not TRUSTED_PROXIES:
+    print("WARNING: TRUSTED_PROXIES is empty; Remote-User headers are accepted from any source. "
+          "Set it to your reverse proxy's IP unless nothing but the proxy can reach the WebUI.", file=sys.stderr)

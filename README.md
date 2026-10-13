@@ -6,6 +6,15 @@ LDAP-integrated OpenVPN certificate management WebUI
 
 English | [日本語](README.ja.md)
 
+## Project status
+
+This project is maintained for the author's own deployment. It will receive:
+
+- security fixes (including dependency updates), and
+- fixes when something stops working.
+
+New features are added only when the author needs them; feature requests may not be taken up. To report a vulnerability, see [SECURITY.md](SECURITY.md).
+
 ## Overview
 
 OpenVPN LDAP WebUI is a web-based certificate management system for OpenVPN that integrates with LDAP authentication. Users can request VPN certificates for their devices through a self-service portal, and administrators can approve or reject requests through an admin interface.
